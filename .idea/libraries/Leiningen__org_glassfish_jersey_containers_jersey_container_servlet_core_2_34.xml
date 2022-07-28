@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: org.glassfish.jersey.containers/jersey-container-servlet-core:2.34">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet-core/2.34/jersey-container-servlet-core-2.34.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

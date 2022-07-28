@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: org.apache.orc/orc-mapreduce:1.7.4">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/orc/orc-mapreduce/1.7.4/orc-mapreduce-1.7.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: org.apache.orc/orc-core:1.7.4">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/orc/orc-core/1.7.4/orc-core-1.7.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

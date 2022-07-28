@@ -21,26 +21,26 @@ The above using Java interop
 
 ```
 (q df
-     (.filter ^Dataset (.and (.gt ^Column (col "InvoiceNo") 536365)
-                             (.gt (col "Quantity") 6)))
-     (.withColumns (HashMap. {"afield" (lit 10)}))
-     (.drop (col "afield"))
-     (.group (into-array ^Column [(col "InvoiceNo")]))
-     (.agg (.as (sum "UnitPrice") "sum")
-           (.as (avg "UnitPrice") "avg"))
-     (.select (into-array [(div (col "sum") (col "avg"))]))
-     (.show))
+   (.filter ^Dataset (.and (.gt (col "InvoiceNo") 536365)
+                           (.gt (col "Quantity") 6)))
+   (.withColumns (HashMap. {"afield" (lit 10)}))
+   (.drop (col "afield"))
+   (.group (into-array [(col "InvoiceNo")]))
+   (.agg (.as (sum "UnitPrice") "sum")
+         (.as (avg "UnitPrice") "avg"))
+   (.select (into-array [(div (col "sum") (col "avg"))]))
+   (.show))
 ```
 
 
 ## Usage
 
-Don't use yet.
-It's under construction.For now a small subset of the Dataset api's are implemented.  
-SQuery-spark follows the syntax of [cmql](https://cmql.org/documentation/) (made for MongoDB).
+Don't use yet.  
+It's under construction.For now a small subset of the Dataset api's are implemented.    
+SQuery-spark follows the syntax of [cmql](https://cmql.org/documentation/) (made for MongoDB).  
 
 ## License
 
-Copyright © 2022 Takis Karyadis
+Copyright © 2022 Takis Karyadis  
 Distributed under the Eclipse Public License version 1.0
 
