@@ -1,0 +1,4 @@
+"name","type","length","leftDigits","rightDigits"
+"CustomerGroupName","STRING","9","0","0"
+"RangeBottom","DECIMAL","10","5","4"
+"RangeTop","DECIMAL","20","15","4"

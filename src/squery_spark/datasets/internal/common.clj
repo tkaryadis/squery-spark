@@ -10,13 +10,14 @@
 ;;the second replaces keywords and numbers,strings to (lit  )
 
 (defn column
-  " converts keywords to columns
+  " converts always to column
+    if keyword => column, else lit, but always column result
     and if {k v} converts the v to col,lit (if keyword,string,number)
     field keyword => col
     field map {k v} => (.as v (name k))
       v is also converted
       if keyword => col
-      if string or number => lit
+      if not column => lit
       else v (no change)"
   [field]
   (cond

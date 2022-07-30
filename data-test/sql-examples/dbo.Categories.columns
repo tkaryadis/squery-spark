@@ -1,0 +1,5 @@
+"name","type","length","leftDigits","rightDigits"
+"CategoryID","INTEGER","1","1","0"
+"CategoryName","STRING","14","0","0"
+"Description","STRING","58","0","0"
+"Picture","STRING","21492","0","0"

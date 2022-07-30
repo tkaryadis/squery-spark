@@ -5,14 +5,14 @@
                             if-not cond
                             into type cast boolean double int long string?  nil? some? true? false?
                             string? int? decimal? double? boolean? number? rand
-                            let get get-in assoc assoc-in dissoc
+                             get get-in assoc assoc-in dissoc
                             concat conj contains? range reverse count take subvec empty?
                             fn map filter reduce
                             first last merge max min
                             str subs re-find re-matcher re-seq replace identity])
   (:require [clojure.core :as c]
-            [squery-spark.datasets.internal.common :refer [column-keyword]])
-  (:import [org.apache.spark.sql functions]))
+            [squery-spark.datasets.internal.common :refer [column-keyword column columns]])
+  (:import [org.apache.spark.sql functions Column]))
 
 ;;---------------------------Arithmetic-------------------------------------
 ;;--------------------------------------------------------------------------
@@ -156,11 +156,8 @@
 ;;--------------------------------------------------------------------------
 
 
-#_(defn contains? [col1 & values]
-  (.isin col1 (into-array values)))
-
-#_(defmacro includes? [col1 value]
-  `(.contains ~col1 ~value))
+(defn contains? [values col]
+  (.isin (column-keyword col) (into-array values)))
 
 
 ;;-----------------SET (arrays/objects and nested)--------------------------
@@ -185,10 +182,20 @@
 ;;--------------------------------------------------------------------------
 
 (defn sum [col]
-  (functions/sum (column-keyword col)))
+  (functions/sum (column col)))
 
 (defn avg [col]
   (functions/avg (column-keyword col)))
+
+(defn count-a
+  ([] (functions/count (lit 1)))
+  ([col] (functions/count (column col))))
+
+(defn conj-each [col]
+  (functions/collect_list ^Column (column-keyword col)))
+
+(defn conj-set [col]
+  (functions/collect_set ^Column (column-keyword col)))
 
 ;;---------------------------windowField------------------------------------
 ;;--------------------------------------------------------------------------
@@ -199,7 +206,28 @@
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
+(defn re-find? [match col]
+  (.rlike (column-keyword col) match))
 
+
+(defn concat
+  "works on strings, binary and arrays"
+  [& cols]
+  (functions/concat (into-array ^Column (columns cols))))
+
+(defn str
+  "concat just for strings"
+  [& cols]
+  (apply concat cols))
+
+
+;;--------------------------Dates-------------------------------------------
+
+(defn date-to-string [col date-format]
+  (functions/date_format (column-keyword col) date-format))
+
+
+;;--------------------------------------------------------------------------
 (defn desc [col]
   (.desc (column-keyword col)))
 
@@ -226,10 +254,18 @@
     false? squery-spark.datasets.operators/false?
     nil? squery-spark.datasets.operators/nil?
     not-nil? squery-spark.datasets.operators/not-nil?
+    re-find? squery-spark.datasets.operators/re-find?
+    contains? squery-spark.datasets.operators/contains?
+    date-to-string squery-spark.datasets.operators/date-to-string
+    concat squery-spark.datasets.operators/concat
+    str squery-spark.datasets.operators/str
 
     ;;accumulators
     sum squery-spark.datasets.operators/sum
     avg squery-spark.datasets.operators/avg
+    count-a squery-spark.datasets.operators/count-a
+    conj-each squery-spark.datasets.operators/conj-each
+    conj-set  squery-spark.datasets.operators/conj-set
 
     ;;Not clojure overides
 
@@ -255,5 +291,9 @@
     ;;stages
     sort squery-spark.datasets.stages/sort
     group squery-spark.datasets.stages/group
+    unset squery-spark.datasets.stages/unset
+    count-s squery-spark.datasets.stages/count-s
+    limit squery-spark.datasets.stages/limit
+
 
     ])

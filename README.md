@@ -35,6 +35,8 @@ The above using Java interop
 
 ## Usage
 
+For overview `test.query_spark.qtest.clj`
+
 Don't use yet.  
 It's under construction.For now a small subset of the Dataset api's are implemented.    
 SQuery-spark follows the syntax of [cmql](https://cmql.org/documentation/) (made for MongoDB).  

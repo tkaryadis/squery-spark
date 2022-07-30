@@ -12,7 +12,7 @@
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
-(def data-path "/home/white/IdeaProjects/louna-spark/")
+(def data-path "/home/white/IdeaProjects/squery-spark/")
 
 ;;--------------------------Load test data--------------------------------
 
@@ -22,7 +22,7 @@
       (.format "csv")
       (.option "header" "true")
       (.option "inferSchema" "true")
-      (.load (str data-path  "/data/retail-data/by-day/2010-12-01.csv"))))
+      (.load (str data-path  "/data-test/definitive/2010-12-01.csv"))))
 
 (.printSchema df)
 
@@ -97,6 +97,11 @@
    (.sum (into-array ^String ["UnitPrice"]))
    .show)
 
+(q df
+   (group :InvoiceNo
+          {:sum (sum :UnitPrice)})
+   .show)
+
 ;;many accumulators
 (q df
    (group :InvoiceNo
@@ -105,10 +110,7 @@
    [:sum]
    .show)
 
-(q df
-   (group :InvoiceNo
-          {:sum (sum :UnitPrice)})
-   .show)
+
 
 ;;------------combination example---------------------
 

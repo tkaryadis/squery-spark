@@ -1,0 +1,4 @@
+"name","type","length","leftDigits","rightDigits"
+"ShipperID","INTEGER","1","1","0"
+"CompanyName","STRING","16","0","0"
+"Phone","STRING","14","0","0"

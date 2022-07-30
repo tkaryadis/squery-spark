@@ -13,3 +13,5 @@ pom.xml.asc
 /old-code/
 /data/
 /resources/
+/.idea/
+/book-data/
