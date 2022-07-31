@@ -1,10 +1,10 @@
 # SQuery-spark
 
-A Clojure library for apache spark
-~2x less code than java
-~1.5x less code than SQL, but simpler and programmable not queries in strings
-
-SQuery goal is to be simpler than SQL and programmable
+A Clojure library for apache spark  
+~2x less code than java  
+~1.5x less code than SQL, but simpler and programmable not queries in strings  
+  
+SQuery goal is to be simpler than SQL and programmable  
 
 ## Example
 
