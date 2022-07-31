@@ -26,6 +26,9 @@
 (def customers (df "Customers"))
 
 
+;;Examples from book
+;;SQL Practice Problems: 57 beginning, intermediate, and advanced challenges for you to solve using a “learn-by-doing” approach
+
 ;;1
 (.printSchema shippers)
 (q shippers
