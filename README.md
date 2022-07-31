@@ -38,7 +38,7 @@ The above using Java interop
 
 ## Usage
 
-For overview `test.query_spark.qtest.clj`
+For overview `test.query_spark.qtest.clj`  
 For SQL examples implemented in SQuery see the folder `squery-spark.sql-book-squery`
 
 Don't use yet.  
