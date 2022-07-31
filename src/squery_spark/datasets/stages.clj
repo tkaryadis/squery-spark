@@ -53,19 +53,34 @@
     (.filter df and-filters)))
 
 (defn unset [df & col-names]
-  (.drop df (into-array String (map name col-names))))
+  (.drop df (into-array String (map (fn [col-name]
+                                      (if (or (keyword? col-name) (string? col-name))
+                                        (name col-name)
+                                        (.toString col-name)))
+                                    col-names))))
 
+;;asc_nulls_last asc_nulls_first  desc_...
 (defn sort
   "DataFrame orderBy"
   [df & cols]
   (let [cols (mapv (fn [col]
-                     (let [desc? (and (keyword? col)
-                                      (clojure.string/starts-with? (name col) "!"))
-                           col (if (and desc? (keyword? col))
-                                 (keyword (subs (name col) 1))
-                                 col)
+                     (let [desc? (and (keyword? col) (clojure.string/starts-with? (name col) "!"))
+                           nl?   (and (keyword? col) (clojure.string/ends-with? (name col) "!"))
+                           col (if desc? (keyword (subs (name col) 1)) col)
+                           col (if nl? (keyword (subs (name col) 0 (dec (count (name col))))) col)
                            col (column-keyword col)
-                           col (if desc? (.desc col) col)]
+                           col (cond
+                                 (and desc? nl?)
+                                 (.desc_nulls_last ^Column col)
+
+                                 desc?
+                                 (.desc ^Column col)
+
+                                 nl?
+                                 (.asc_nulls_last ^Column col)
+
+                                 :else
+                                 col)]
                        col))
                    cols)]
     (.orderBy df (into-array Column cols))))
@@ -110,7 +125,27 @@
 (defn limit [df n]
   (.limit df n))
 
-#_(defn cube [data-frame & cols]
-  (.cube data-frame (ca cols)))
+(defn join-eq
+  "Equality join"
+  ([df1 df2 col]
+   (let [col (if (keyword? col) (name col) col)
+         join-result (.join df1 df2 (.equalTo (.col df1 col) (.col df2 col)))]
+     (.drop join-result (.col df2 col))))
+  ([df1 df2 col1 col2]
+   (let [col1 (if (keyword? col1) (name col1) col1)
+         col2 (if (keyword? col2) (name col2) col2)]
+     (.join df1 df2 (.equalTo (.col df1 col1) (.col df2 col2)))))
+  ([df1 df2 col1 col2 join-type]
+   (let [col1 (if (keyword? col1) (name col1) col1)
+         col2 (if (keyword? col2) (name col2) col2)]
+     (.join df1 df2 (.equalTo (.col df1 col1) (.col df2 col2))
+            join-type))))
+
+
+(defn join
+  ([df1 df2 join-condition]
+   (.join df1 df2 join-condition))
+  ([df1 df2 join-condition join-type]
+   (.join df1 df2 join-condition join-type)))
 
 

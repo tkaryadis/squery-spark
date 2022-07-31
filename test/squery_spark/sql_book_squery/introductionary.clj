@@ -152,6 +152,24 @@
    .show)
 
 
+;;18
+(q products
+   (join suppliers :SupplierID)
+   (sort :ProductID)
+   [:ProductID :ProductName {:Supplier :CompanyName}]
+   (.show))
+
+;;19
+(q orders
+   ((< :OrderID 10300))
+   (join shippers :ShipVia :ShipperID)
+   (sort :OrderID)
+   [:OrderID
+    {:OrderDate (date-to-string :OrderDate "yyyy-mm-dd")}
+    {:Shipper :CompanyName}]
+   .show)
+
+
 
 
 

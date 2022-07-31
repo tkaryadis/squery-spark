@@ -1,7 +1,10 @@
 # SQuery-spark
 
-A Clojure library for apache spark.
-Query spark with s-expressions and with ~2x less code.
+A Clojure library for apache spark
+~2x less code than java
+~1.5x less code than SQL, but simpler and programmable not queries in strings
+
+SQuery goal is to be simpler than SQL and programmable
 
 ## Example
 
@@ -20,7 +23,7 @@ Query spark with s-expressions and with ~2x less code.
 The above using Java interop
 
 ```
-(q df
+(-> df
    (.filter ^Dataset (.and (.gt (col "InvoiceNo") 536365)
                            (.gt (col "Quantity") 6)))
    (.withColumns (HashMap. {"afield" (lit 10)}))
@@ -36,6 +39,7 @@ The above using Java interop
 ## Usage
 
 For overview `test.query_spark.qtest.clj`
+For SQL examples implemented in SQuery see the folder `squery-spark.sql-book-squery`
 
 Don't use yet.  
 It's under construction.For now a small subset of the Dataset api's are implemented.    
@@ -45,4 +49,3 @@ SQuery-spark follows the syntax of [cmql](https://cmql.org/documentation/) (made
 
 Copyright © 2022 Takis Karyadis  
 Distributed under the Eclipse Public License version 1.0
-
