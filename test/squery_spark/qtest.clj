@@ -2,7 +2,6 @@
   (:refer-clojure :only [])
   (:require [squery-spark.datasets.query :refer :all]
             [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
-            [squery-spark.datasets.sql-functions :refer [col]]
             [squery-spark.datasets.stages :refer :all]
             [squery-spark.datasets.operators :refer :all])
   (:refer-clojure)
@@ -93,8 +92,8 @@
 ;;---------groupby--------------------------------------------------------------------
 
 (q df
-   (group :InvoiceNo)
-   (.sum (into-array ^String ["UnitPrice"]))
+   (.groupBy (into-array Column [(col "InvoiceNo")]))
+   (.sum (into-array String ["UnitPrice"]))
    .show)
 
 (q df
@@ -127,11 +126,11 @@
 
 ;;the above with java interop
 #_(q df
-     (.filter ^Dataset (.and (.gt ^Column (col "InvoiceNo") 536365)
-                             (.gt (col "Quantity") 6)))
+     (.filter (.and (.gt (col "InvoiceNo") 536365)
+                    (.gt (col "Quantity") 6)))
      (.withColumns (HashMap. {"afield" (lit "hello")}))
      (.drop (col "afield"))
-     (.group (into-array ^Column [(col "InvoiceNo")]))
+     (.group (into-array Column [(col "InvoiceNo")]))
      (.agg (.as (sum "UnitPrice") "sum")
            (.as (avg "UnitPrice") "avg"))
      (.select (into-array [(div (col "sum") (col "avg"))]))

@@ -12,7 +12,8 @@
                             str subs re-find re-matcher re-seq replace identity])
   (:require [clojure.core :as c]
             [squery-spark.datasets.internal.common :refer [column column columns]])
-  (:import [org.apache.spark.sql functions Column]))
+  (:import [org.apache.spark.sql functions Column]
+           (org.apache.spark.sql.expressions Window)))
 
 ;;---------------------------Arithmetic-------------------------------------
 ;;--------------------------------------------------------------------------
@@ -171,7 +172,8 @@
 (defn date [col]
   (functions/to_date (column col)))
 
-
+(defn col [c]
+  (functions/col c))
 
 
 ;;---------------------------Arrays-----------------------------------------
@@ -225,6 +227,27 @@
 ;;---------------------------windowField------------------------------------
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
+
+;;val windowSpec = Window
+;                  .partitionBy("CustomerId", "date")
+;                  .orderBy(col("Quantity").desc)
+;                  .rowsBetween(Window.unboundedPreceding, Window.currentRow)
+
+;;(.over (functions/rank) (.orderBy
+;                                         (Window/orderBy (into-array Column []))
+;                                         (into-array Column [(col :id)])))
+
+(defn wfield
+  ([acc-fun window-spec] (.over (column acc-fun) window-spec))
+  ([acc-fun] (.over (column acc-fun))))
+
+(defn wspec []
+  "Call example (add field here)
+     {'myfield'  (wfield (rank) (-> (wspec) (sort :price)))}"
+  (Window/partitionBy (into-array Column [])))
+
+(defn rank []
+  (functions/rank))
 
 
 ;;---------------------------Strings----------------------------------------
@@ -307,6 +330,9 @@
     count-a squery-spark.datasets.operators/count-a
     conj-each squery-spark.datasets.operators/conj-each
     conj-set  squery-spark.datasets.operators/conj-set
+    wfield squery-spark.datasets.operators/wfield
+    ;;wspec  squery-spark.datasets.operators/wspec
+    rank  squery-spark.datasets.operators/rank
 
     ;;Not clojure overides
 

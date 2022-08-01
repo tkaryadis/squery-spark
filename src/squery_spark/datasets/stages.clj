@@ -1,11 +1,12 @@
 (ns squery-spark.datasets.stages
   (:refer-clojure :exclude [sort])
   (:require [clojure.core :as c]
-            [squery-spark.datasets.internal.common :refer [columns column-keyword single-maps]]
+            [squery-spark.datasets.internal.common :refer [columns column-keyword column single-maps]]
             [squery-spark.utils.utils :refer [string-map]])
   (:import (org.apache.spark.sql Dataset Column)
            [org.apache.spark.sql functions RelationalGroupedDataset]
-           (java.util HashMap)))
+           (java.util HashMap)
+           (org.apache.spark.sql.expressions Window)))
 
 ;;project(select) stage can be 3 ways
 ;; col
@@ -30,15 +31,7 @@
 (defn add-columns [df m]
   (let [m (reduce (fn [m1 k]
                     (let [v (get m k)
-                          v (cond
-                              (keyword? v)
-                              (functions/col (name v))
-
-                              (not (instance? org.apache.spark.sql.Column v))
-                              (functions/lit v)
-
-                              :else
-                              v)]
+                          v (column v)]
                       (assoc m1 (name k) v)))
                   {}
                   (keys m))
@@ -84,6 +77,7 @@
                        col))
                    cols)]
     (.orderBy df (into-array Column cols))))
+
 
 (defn group
   "Call ways
@@ -139,13 +133,13 @@
    (let [col1 (if (keyword? col1) (name col1) col1)
          col2 (if (keyword? col2) (name col2) col2)]
      (.join df1 df2 (.equalTo (.col df1 col1) (.col df2 col2))
-            join-type))))
+            (name join-type)))))
 
 
 (defn join
   ([df1 df2 join-condition]
    (.join df1 df2 join-condition))
   ([df1 df2 join-condition join-type]
-   (.join df1 df2 join-condition join-type)))
+   (.join df1 df2 join-condition (name join-type))))
 
 
