@@ -1,10 +1,18 @@
 # SQuery-spark
 
-A Clojure library for apache spark    
-~2x less code than java    
-~1.5x less code than SQL, but simpler and programmable not queries in strings    
+Query language for Apache-Spark.    
 
-SQuery goal is to be simpler than SQL and the same time programmable  
+Clojure is used because    
+ 1. runs on JVM    
+ 2. its a general programming language
+ 3. its ideal language to make DSL's     
+ 4. its dynamic simple and practical    
+ 5. its functional allowing natural data processing   
+ 6. it has tree syntax, and can represent more complex pipelines   
+
+Those allows Clojure to be simpler from all alternatives Java,Scala,Python.  
+And because its a general programming language we dont have to write queries
+in strings like in SQL.
 
 ## Example
 
@@ -16,8 +24,7 @@ SQuery goal is to be simpler than SQL and the same time programmable
    (group :InvoiceNo
            {:sum (sum :UnitPrice)}
            {:avg (avg :UnitPrice)})
-   [{:sumavg (div :sum :avg)}]
-   .show)
+   [{:sumavg (div :sum :avg)}])
 ```
 
 The above using Java interop
@@ -31,8 +38,7 @@ The above using Java interop
    (.group (into-array [(col "InvoiceNo")]))
    (.agg (.as (sum "UnitPrice") "sum")
          (.as (avg "UnitPrice") "avg"))
-   (.select (into-array [(div (col "sum") (col "avg"))]))
-   (.show))
+   (.select (into-array [(div (col "sum") (col "avg"))])))
 ```
 
 
