@@ -280,6 +280,12 @@
 (defn month [col]
   (functions/month (column col)))
 
+(defn day-of-month [col]
+  (functions/dayofmonth (column col)))
+
+(defn last-day-of-month [col]
+  (functions/last_day (column col)))
+
 (defn days-diff [col-end col-start]
   (functions/datediff (column col-end)  (column col-start)))
 
@@ -319,6 +325,8 @@
     date-to-string squery-spark.datasets.operators/date-to-string
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
+    day-of-month squery-spark.datasets.operators/day-of-month
+    c squery-spark.datasets.operators/last-day-of-month
     concat squery-spark.datasets.operators/concat
     str squery-spark.datasets.operators/str
 

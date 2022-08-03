@@ -5,9 +5,7 @@
             [squery-spark.datasets.stages :refer :all]
             [squery-spark.datasets.operators :refer :all]
             [squery-spark.sql-book-squery.read-tables :refer [read-table]])
-  (:refer-clojure)
-  (:import (org.apache.spark.sql functions Dataset RelationalGroupedDataset Column)
-           (java.util HashMap)))
+  (:refer-clojure))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -23,6 +21,7 @@
 (def products (df "Products"))
 (def order-details (df "OrderDetails"))
 (def customers (df "Customers"))
+(def mytest (df "mytest"))
 
 
 ;;Examples from book

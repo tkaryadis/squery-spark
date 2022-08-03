@@ -7,11 +7,7 @@
             [squery-spark.datasets.rows :refer :all]
             [squery-spark.sql-book-squery.read-tables :refer [read-table]])
   (:refer-clojure)
-  (:require [clojure.core :as c])
-  (:import (org.apache.spark.sql functions Dataset RelationalGroupedDataset Column)
-           (java.util HashMap)
-           (org.apache.spark.sql.types DataTypes)
-           (org.apache.spark.sql.expressions Window WindowSpec)))
+  (:require [clojure.core :as c]))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")

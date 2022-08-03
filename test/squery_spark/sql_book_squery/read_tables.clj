@@ -3,9 +3,7 @@
   (:require [squery-spark.datasets.query :refer :all]
             [squery-spark.datasets.stages :refer :all]
             [squery-spark.datasets.operators :refer :all])
-  (:refer-clojure)
-  (:import (org.apache.spark.sql Dataset RelationalGroupedDataset Column)
-           (java.util HashMap)))
+  (:refer-clojure))
 
 (defn read-table [spark path filename]
   (-> spark
