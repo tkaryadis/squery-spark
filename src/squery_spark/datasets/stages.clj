@@ -6,7 +6,7 @@
   (:import (org.apache.spark.sql Dataset Column)
            [org.apache.spark.sql functions RelationalGroupedDataset]
            (java.util HashMap)
-           (org.apache.spark.sql.expressions Window)))
+           (org.apache.spark.sql.expressions Window WindowSpec)))
 
 ;;project(select) stage can be 3 ways
 ;; col
@@ -19,20 +19,12 @@
   "[:CustomerID (lit 5) {:price (coll \"UnitPrice\")}]
    (.select ^Dataset (into-array [(col \"CustomerID\")  (lit 5) (.as (col \"UnitPrice\") \"price\")]))"
   [df & fields]
-  (let [                                                    ;_ (prn "fields-before" fields)
-        fields (columns fields)
-        ;_ (prn "fields-after" fields)
-        field-array (into-array Column fields)
-        ;_ (prn "xx" field-array)
-        ]
-    (.select ^Dataset df field-array)))
+  (.select ^Dataset df (into-array Column (columns fields))))
 
-;;	withColumns(java.util.Map<String,Column> colsMap)
 (defn add-columns [df m]
   (let [m (reduce (fn [m1 k]
-                    (let [v (get m k)
-                          v (column v)]
-                      (assoc m1 (name k) v)))
+                    (let [v (get m k)]
+                      (assoc m1 (name k) (column v))))
                   {}
                   (keys m))
         m (HashMap. m)]
@@ -90,9 +82,10 @@
     (group nil
            {:acField1 (acc-f :field)})"
   [df & cols-acc]
-  (let [cols (filter #(not (map? %)) cols-acc)
+  (let [[cols acc]  (if (vector? (first cols-acc))
+                      [(first cols-acc) (rest cols-acc)]
+                      [(filter #(not (map? %)) cols-acc) (filter #(map? %) cols-acc)])
         first-col (first cols)
-        acc (filter #(map? %) cols-acc)
         acc-maps (single-maps (into [] acc))]
     (if (empty? acc-maps)
       (.distinct ^Dataset (apply (partial select df) cols))
@@ -102,7 +95,7 @@
                               acc-value (first (vals m))]
                           (.as acc-value field-name)))
                       acc-maps)
-            acc-first ^Column (first acc)
+            acc-first  (first acc)
             acc-rest (if (> (count acc) 1)
                        (into-array Column (rest acc))
                        (into-array Column []))]
@@ -132,8 +125,7 @@
   ([df1 df2 col1 col2 join-type]
    (let [col1 (if (keyword? col1) (name col1) col1)
          col2 (if (keyword? col2) (name col2) col2)]
-     (.join df1 df2 (.equalTo (.col df1 col1) (.col df2 col2))
-            (name join-type)))))
+     (.join df1 df2 (.equalTo (.col df1 col1) (.col df2 col2)) (name join-type)))))
 
 
 (defn join
@@ -141,5 +133,8 @@
    (.join df1 df2 join-condition))
   ([df1 df2 join-condition join-type]
    (.join df1 df2 join-condition (name join-type))))
+
+(defn union-with [df1 df2]
+  (.union df1 df2))
 
 

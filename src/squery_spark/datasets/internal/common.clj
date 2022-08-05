@@ -33,15 +33,7 @@
           field (dissoc field :meta)
           k (name (first (keys field)))
           v (first (vals field))
-          v (cond
-              (keyword? v)
-              (functions/col (name v))
-
-              (not (instance? org.apache.spark.sql.Column v))
-              (functions/lit v)
-
-              :else
-              v)]
+          v (column v)]
       (if meta
         (.as v k meta)
         (.as v k)))
@@ -70,9 +62,7 @@
           field (dissoc field :meta)
           k (name (first (keys field)))
           v (first (vals field))
-          v (if (keyword? v)
-              (functions/col (name v))
-              v)]
+          v (column-keyword v)]
       (if meta
         (.as v k meta)
         (.as v k)))
@@ -125,3 +115,12 @@
            (recur ms (dissoc m k) (conj single-ms (keyword-map {k v}))))))))
   ([ms]
    (single-maps ms #{})))
+
+(defn nested2 [f args]
+  (let [first-value (f (first args) (second args))
+        args (rest (rest args))]
+    (loop [args args
+           nested-f first-value]
+      (if (empty? args)
+        nested-f
+        (recur (rest args) (f (first args) nested-f))))))

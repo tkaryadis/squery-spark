@@ -11,9 +11,9 @@
                             first last merge max min
                             str subs re-find re-matcher re-seq replace identity])
   (:require [clojure.core :as c]
-            [squery-spark.datasets.internal.common :refer [column column columns]])
+            [squery-spark.datasets.internal.common :refer [column column columns nested2]])
   (:import [org.apache.spark.sql functions Column]
-           (org.apache.spark.sql.expressions Window)))
+           (org.apache.spark.sql.expressions Window WindowSpec)))
 
 ;;---------------------------Arithmetic-------------------------------------
 ;;--------------------------------------------------------------------------
@@ -103,8 +103,11 @@
 ;;--------------------------------------------------------------------------
 
 
-(defn and [col1 col2]
+(defn and-internal [col1 col2]
   (.and (column col1) (column col2)))
+
+(defn and [& cols]
+  (nested2 #(.and %1 %2)  cols))
 
 (defn or [col1 col2]
   (.or (column col1) (column col2)))
@@ -128,11 +131,11 @@
 ;;otherwise(Object value)
 ;;when(Column condition, Object value)
 
-(defn if- [col-condition value else-value]
-  (.otherwise (functions/when (column col-condition) value) else-value))
+(defn if- [col-condition col-value col-else-value]
+  (.otherwise (functions/when (column col-condition) (column col-value)) (column col-else-value)))
 
-(defn if-not [col-condition value else-value]
-  (.otherwise (functions/when (functions/not ^Column (column col-condition)) value) else-value))
+(defn if-not [col-condition col-value col-else-value]
+  (.otherwise (functions/when (functions/not (column col-condition)) (column col-value)) (column col-else-value)))
 
 
 
@@ -160,7 +163,10 @@
   [col]
   (.isNull (column col)))
 
-(defn not-nil? [col]
+(defn if-nil? [col nil-value]
+  (if- (nil? col) (column nil-value) (column col)))
+
+(defn some? [col]
   (.isNotNull (column col)))
 
 ;;convert
@@ -174,6 +180,9 @@
 
 (defn col [c]
   (functions/col c))
+
+(defn format-number [col d]
+  (functions/format_number (column col) d))
 
 
 ;;---------------------------Arrays-----------------------------------------
@@ -224,6 +233,12 @@
 (defn conj-set [col]
   (functions/collect_set ^Column (column col)))
 
+(defn first [col]
+  (functions/first (column col)))
+
+(defn last [col]
+  (functions/last (column col)))
+
 ;;---------------------------windowField------------------------------------
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -249,6 +264,38 @@
 (defn rank []
   (functions/rank))
 
+(defn wgroup
+  ([& args]
+   (c/let [[wspec cols] (if (instance? WindowSpec (c/first args))
+                        [(c/first args) (c/rest args)]
+                        [nil args])
+         cols (columns cols)]
+     (if (c/nil? wspec)
+       (Window/partitionBy (into-array Column cols))
+       (.partitionBy wspec (into-array Column cols))))))
+
+(defn wsort
+  ([& args]
+   (c/let [[wspec cols] (if (instance? WindowSpec (c/first args))
+                        [(c/first args) (c/rest args)]
+                        [nil args])
+         cols (columns cols)]
+     (if (c/nil? wspec)
+       (Window/orderBy (into-array Column cols))
+       (.orderBy wspec (into-array Column cols))))))
+
+(defn wrange
+  ([wspec start end]
+   (.rangeBetween wspec start end))
+  ([start end]
+   (Window/rangeBetween start end)))
+
+(defn wrows
+  ([wspec start end]
+   (.rowsBetween wspec start end))
+  ([start end]
+   (Window/rowsBetween start end)))
+
 
 ;;---------------------------Strings----------------------------------------
 ;;--------------------------------------------------------------------------
@@ -267,7 +314,6 @@
   "concat just for strings"
   [& cols]
   (apply concat cols))
-
 
 ;;--------------------------Dates-------------------------------------------
 
@@ -297,6 +343,7 @@
 (defn asc [col]
   (.asc (column col)))
 
+
 ;;---------------------------------------------------------
 
 (def operators-mappings
@@ -318,8 +365,10 @@
     true? squery-spark.datasets.operators/true?
     false? squery-spark.datasets.operators/false?
     nil? squery-spark.datasets.operators/nil?
-    not-nil? squery-spark.datasets.operators/not-nil?
+    if-nil? squery-spark.datasets.operators/if-nil?
+    some? squery-spark.datasets.operators/some?
     date squery-spark.datasets.operators/date
+    format-number squery-spark.datasets.operators/format-number
     re-find? squery-spark.datasets.operators/re-find?
     contains? squery-spark.datasets.operators/contains?
     date-to-string squery-spark.datasets.operators/date-to-string
@@ -339,8 +388,13 @@
     conj-each squery-spark.datasets.operators/conj-each
     conj-set  squery-spark.datasets.operators/conj-set
     wfield squery-spark.datasets.operators/wfield
-    ;;wspec  squery-spark.datasets.operators/wspec
     rank  squery-spark.datasets.operators/rank
+    wgroup squery-spark.datasets.operators/wgroup
+    wsort squery-spark.datasets.operators/wsort
+    wrange squery-spark.datasets.operators/wrange
+    wrows squery-spark.datasets.operators/wrows
+    first squery-spark.datasets.operators/first
+    last squery-spark.datasets.operators/last
 
     ;;Not clojure overides
 
@@ -370,5 +424,6 @@
     count-s squery-spark.datasets.stages/count-s
     limit squery-spark.datasets.stages/limit
     join squery-spark.datasets.stages/join
+    union-with squery-spark.datasets.stages/union-with
 
     ])
