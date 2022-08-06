@@ -7,7 +7,9 @@
             [squery-spark.datasets.rows :refer :all]
             [squery-spark.sql-book-squery.read-tables :refer [read-table]])
   (:refer-clojure)
-  (:require [clojure.core :as c]))
+  (:require [clojure.core :as c])
+  (:import [org.apache.spark.sql functions Column]
+           (org.apache.spark.sql.expressions Window WindowSpec)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -265,35 +267,28 @@
           {:order-date (first :OrderDate)})
    (.show 100))
 
-(def orders1 (df "Orders"))
+(def orders_next (df "Orders"))
 
-#_(if- (> [orders :OrderDate]
-          [orders1 :OrderDate])
-    [orders1 :OrderDate]
-    [orders :OrderDate])
-
-;;56
+;;56  TODO ALIAS
 (q orders
-   [:CustomerID {:date1 :OrderDate} {:OrderID1 :OrderID}]
-   (join (q orders1
+   [:CustomerID {:InitialOrderDate :OrderDate} {:InitialOrderID :OrderID}]
+   (join (q orders_next
             [:CustomerID
-             {:date2 :OrderDate}
-             {:OrderID2 :OrderID}])
-         (let [max-date (if- (> (days-diff :date1 :date2) 0) :date1 :date2)
-               min-date (if- (> (days-diff :date1 :date2) 0) :date2 :date1)]
-           (and (= [orders :CustomerID] [orders1 :CustomerID])
-                (> (days-diff max-date min-date) 0)
-                (<= (days-diff max-date min-date) 5)
-                (< :date1 :date2))))
-   [{:CustomerID [orders :CustomerID]}
-    {:InitialOrderID :OrderID1}
-    {:InitialOrderDate :date1}
-    {:NextOrderID :OrderID2}
-    {:NextOrderDate :date2}
-    {:daysDiff (days-diff :date2 :date1)}]
+             {:NextOrderDate :OrderDate}
+             {:NextOrderID :OrderID}])
+         (and (= [orders :CustomerID] [orders_next :CustomerID])
+              (< :InitialOrderDate :NextOrderDate)
+              (> (days-diff :NextOrderDate :InitialOrderDate) 0)
+              (<= (days-diff :NextOrderDate :InitialOrderDate) 5)))
+   {:daysDiff (days-diff :NextOrderDate :InitialOrderDate)}
+   (unset [orders :CustomerID])
    (sort :CustomerID)
    (.show 100))
 
 ;;57 TODO
-
+#_(q orders
+   (group :CustomerID (functions/window (col "OrderDate") "5 days")
+          {:sum (sum 1)})
+   (sort :CustomerID)
+   (.show 100 false))
 

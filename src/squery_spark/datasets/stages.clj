@@ -37,12 +37,12 @@
                             (rest fs))]
     (.filter df and-filters)))
 
-(defn unset [df & col-names]
-  (.drop df (into-array String (map (fn [col-name]
-                                      (if (or (keyword? col-name) (string? col-name))
-                                        (name col-name)
-                                        (.toString col-name)))
-                                    col-names))))
+(defn unset [df & cols]
+  (let [cols (columns cols)]
+    (reduce (fn [value this]
+              (.drop value this))
+            (.drop df (first cols))
+            (rest cols))))
 
 ;;asc_nulls_last asc_nulls_first  desc_...
 (defn sort
