@@ -20,7 +20,7 @@ in strings like in SQL.
 2. be like [cMQL](https://cmql.org/documentation/) the MongoDB query language
 3. use macros, to avoid the need for namespace qualified names inside the queries
 4. be programmable, no code in strings
-5. be simpler than all alternatives, including SQL
+5. be simpler than all alternatives, Java,Scala,Python, including SQL
  
 ## Example
 
