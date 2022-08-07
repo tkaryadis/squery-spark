@@ -16,7 +16,7 @@ in strings like in SQL.
 
 ## Design goals
 
-1. to have on Clojure syntax, and Clojure names, Clojure way
+1. to have on Clojure syntax, and Clojure names, Clojure way  
    (see [cMQL](https://cmql.org/documentation/) the MongoDB query language that is based on Clojure syntax)
 2. use macro to use the Clojure operators inside the queries without namespace qualified names
 3. be simple as compact and simple as possible
