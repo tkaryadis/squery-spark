@@ -10,16 +10,18 @@ Clojure is used because
  5. its functional allowing natural data processing   
  6. it has tree syntax, and can represent more complex pipelines   
 
-Those allows Clojure to be simpler from all alternatives Java,Scala,Python.  
-And because its a general programming language we dont have to write queries
+This allows Clojure to be simpler from all alternatives Java,Scala,Python.  
+And because it's a general programming language we don't have to write queries
 in strings like in SQL.
 
 ## Design goals
 
 1. be like clojure (use clojure way/names, and spark's way after)
-2. use macros, to avoid the need for namespace qualified names inside the queries
-3. be programmable, like java,scala,python, but simpler than all including SQL
-
+2. be like [cMQL](https://cmql.org/documentation/) the MongoDB query language made
+3. use macros, to avoid the need for namespace qualified names inside the queries
+4. be programmable, no code in strings
+5. be simpler than all alternatives, using Clojure features
+ 
 ## Example
 
 ```
