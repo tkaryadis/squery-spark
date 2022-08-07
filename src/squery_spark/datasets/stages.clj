@@ -8,6 +8,8 @@
            (java.util HashMap)
            (org.apache.spark.sql.expressions Window WindowSpec)))
 
+;;Operators for Datasets
+
 ;;project(select) stage can be 3 ways
 ;; col
 ;; add new coll
@@ -15,12 +17,15 @@
 ;;   with new name
 ;; [:CustomerID (lit 5) {:price (coll "UnitPrice")}]
 ;; (.select ^Dataset (into-array [(col "CustomerID")  (lit 5) (.as (col "UnitPrice") "price")]))
+;;TODO select can take also arguments like "*" in spark
 (defn select
   "[:CustomerID (lit 5) {:price (coll \"UnitPrice\")}]
    (.select ^Dataset (into-array [(col \"CustomerID\")  (lit 5) (.as (col \"UnitPrice\") \"price\")]))"
   [df & fields]
   (.select ^Dataset df (into-array Column (columns fields))))
 
+
+;;TODO df.withColumnRenamed("DEST_COUNTRY_NAME", "dest").columns,maybe {!field1 : field2}
 (defn add-columns [df m]
   (let [m (reduce (fn [m1 k]
                     (let [v (get m k)]
@@ -70,7 +75,7 @@
                    cols)]
     (.orderBy df (into-array Column cols))))
 
-
+;;TODO FIX THE NIL THE DROP NO NEED
 (defn group
   "Call ways
     No accumulators
@@ -137,4 +142,8 @@
 (defn union-with [df1 df2]
   (.union df1 df2))
 
+;;not dataset return
+
+(defn take-rows [df n]
+  (.takeAsList df n))
 

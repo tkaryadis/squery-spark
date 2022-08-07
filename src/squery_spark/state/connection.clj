@@ -17,5 +17,9 @@
 
 (defn get-spark-context [spark]
   (-> spark
+      (.sparkContext)))
+
+(defn get-java-spark-context [spark]
+  (-> spark
       (.sparkContext)
       (JavaSparkContext/fromSparkContext)))

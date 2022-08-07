@@ -1,27 +1,31 @@
-(ns squery-spark.sql-book-squery.introductionary
+(ns squery-spark.sql57_examples_book.introductionary
   (:refer-clojure :only [])
   (:require [squery-spark.datasets.query :refer :all]
             [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
             [squery-spark.datasets.stages :refer :all]
             [squery-spark.datasets.operators :refer :all]
-            [squery-spark.sql-book-squery.read-tables :refer [read-table]])
+            [squery-spark.sql57_examples_book.read-tables :refer [read-table]])
   (:refer-clojure))
+
+;;Book
+;;SQL Practice Problems: 57 beginning, intermediate, and advanced challenges for you to solve
+;;using a “learn-by-doing” approach , by Sylvia Moestl Vasilik
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
-(def data-path "/home/white/IdeaProjects/squery-spark/")
-(def df (partial read-table spark (str  data-path "/data-test/sql-examples/")))
+(def data-path "/home/white/IdeaProjects/squery-spark/")    ;;CHANGE THIS!!!
+(def df-read (partial read-table spark (str  data-path "/data-used/sql57-examples-book/")))
 
 ;;Read dfs
-(def shippers (df "Shippers"))
-(def categories (df "Categories"))
-(def employees (df "Employees"))
-(def orders (df "Orders"))
-(def suppliers (df "Suppliers"))
-(def products (df "Products"))
-(def order-details (df "OrderDetails"))
-(def customers (df "Customers"))
-(def mytest (df "mytest"))
+(def shippers (df-read "Shippers"))
+(def categories (df-read "Categories"))
+(def employees (df-read "Employees"))
+(def orders (df-read "Orders"))
+(def suppliers (df-read "Suppliers"))
+(def products (df-read "Products"))
+(def order-details (df-read "OrderDetails"))
+(def customers (df-read "Customers"))
+(def mytest (df-read "mytest"))
 
 
 ;;Examples from book

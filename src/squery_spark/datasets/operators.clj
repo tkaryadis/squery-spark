@@ -11,9 +11,12 @@
                             first last merge max min
                             str subs re-find re-matcher re-seq replace identity])
   (:require [clojure.core :as c]
-            [squery-spark.datasets.internal.common :refer [column column columns nested2]])
+            [squery-spark.datasets.internal.common :refer [column column columns nested2]]
+            [squery-spark.datasets.schema :refer [schema-types]])
   (:import [org.apache.spark.sql functions Column]
            (org.apache.spark.sql.expressions Window WindowSpec)))
+
+;;Operators for columns
 
 ;;---------------------------Arithmetic-------------------------------------
 ;;--------------------------------------------------------------------------
@@ -37,8 +40,8 @@
 (defn * [col1 col2]
   (.multiply  (column col1) (column col2)))
 
-(defn mod [col]
-  (.mod (column col)))
+(defn mod [col other]
+  (.mod (column col) (column other)))
 
 (defn pow [col1 col2]
   (functions/pow (column col1) (column col2)))
@@ -171,8 +174,14 @@
 
 ;;convert
 (defn cast [col to-type]
-  (.cast (column col) (if (keyword? to-type)
-                        (name to-type)
+  (.cast (column col) (c/cond
+                        (c/string? to-type)
+                        (c/get schema-types (c/keyword to-type))
+
+                        (c/keyword? to-type)
+                        (c/get schema-types to-type)
+
+                        :else
                         to-type)))
 
 (defn date [col]
@@ -239,6 +248,11 @@
 (defn last [col]
   (functions/last (column col)))
 
+(defn count-distinct [& cols]
+  (if (c/> (c/count cols) 1)
+    (functions/count_distinct (column (c/first cols)) (into-array Column (columns (c/rest cols))))
+    (functions/count_distinct (column (c/first cols)) (into-array Column []))))
+
 ;;---------------------------windowField------------------------------------
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -296,6 +310,10 @@
   ([start end]
    (Window/rowsBetween start end)))
 
+(defn window
+  ([col duration] (functions/window (column col) duration))
+  ([col duration slide] (functions/window (column col) duration slide)))
+
 
 ;;---------------------------Strings----------------------------------------
 ;;--------------------------------------------------------------------------
@@ -342,6 +360,11 @@
 
 (defn asc [col]
   (.asc (column col)))
+
+(defn todf
+  ([df & col-names]
+   (.toDF df (into-array ^String (c/map name col-names))))
+  ([df] (.toDF df)))
 
 
 ;;---------------------------------------------------------
@@ -393,8 +416,10 @@
     wsort squery-spark.datasets.operators/wsort
     wrange squery-spark.datasets.operators/wrange
     wrows squery-spark.datasets.operators/wrows
+    window squery-spark.datasets.operators/window
     first squery-spark.datasets.operators/first
     last squery-spark.datasets.operators/last
+    count-distinct squery-spark.datasets.operators/count-distinct
 
     ;;Not clojure overides
 
@@ -416,6 +441,7 @@
 
     asc squery-spark.datasets.operators/asc
     desc squery-spark.datasets.operators/desc
+    todf squery-spark.datasets.operators/todf
 
     ;;stages
     sort squery-spark.datasets.stages/sort
@@ -425,5 +451,6 @@
     limit squery-spark.datasets.stages/limit
     join squery-spark.datasets.stages/join
     union-with squery-spark.datasets.stages/union-with
+    take-rows squery-spark.datasets.stages/take-rows
 
     ])

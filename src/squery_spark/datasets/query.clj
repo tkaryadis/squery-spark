@@ -16,3 +16,7 @@
         ]
     `(let ~squery-spark.datasets.operators/operators-mappings
        ~query)))
+
+(defmacro sq [arg]
+  `(let ~squery-spark.datasets.operators/operators-mappings
+     ~arg))
