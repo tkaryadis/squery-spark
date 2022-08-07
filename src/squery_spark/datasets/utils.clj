@@ -1,7 +1,8 @@
 (ns squery-spark.datasets.utils
   (:require [squery-spark.state.connection :refer [get-java-spark-context]]
-            [squery-spark.datasets.schema :refer [build-schema]])
-  (:import (org.apache.spark.sql RowFactory)))
+            [squery-spark.datasets.schema :refer [build-schema]]
+            [squery-spark.datasets.internal.common :refer [columns]])
+  (:import (org.apache.spark.sql RowFactory Column)))
 
 (defn parallelize [spark data]
   (-> (get-java-spark-context spark)
@@ -22,3 +23,16 @@
 (defn seq->df [spark seq schema]
   (let [rdd (seq->rdd spark seq)]
     (rdd->df spark rdd schema)))
+
+(defn show
+  ([df] (.show df))
+  ([df n-rows] (.show df n-rows))
+  ([df n-rows truncate] (.show df n-rows truncate))
+  ([df n-rows truncate vertical?] (.show df n-rows truncate vertical?)))
+
+(defn take-rows [df n]
+  (.takeAsList df n))
+
+(defn repartition
+  ([df n] (.repartition df n))
+  ([df n & cols] (.repartition df n (into-array Column (columns cols)))))

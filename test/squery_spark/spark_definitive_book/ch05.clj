@@ -145,17 +145,18 @@
 
 ;;dfWithLongColName.select(col("This Long Column-Name")).columns
 
-(println (q dfWithLongColName
-            [(keyword "This Long Column-Name")]
-            header))
+(q dfWithLongColName
+   [(keyword "This Long Column-Name")]
+   header
+   println)
 
 ;;df.drop("ORIGIN_COUNTRY_NAME").columns
 
-(println (q df (unset :ORIGIN_COUNTRY_NAME) header))
+(q df (unset :ORIGIN_COUNTRY_NAME) header println)
 
 ;dfWithLongColName.drop("ORIGIN_COUNTRY_NAME", "DEST_COUNTRY_NAME")
 
-(println (q df (unset :ORIGIN_COUNTRY_NAME :DEST_COUNTRY_NAME) header))
+(q df (unset :ORIGIN_COUNTRY_NAME :DEST_COUNTRY_NAME) header println)
 
 ;df.withColumn("count2", col("count").cast("long"))
 
@@ -175,13 +176,99 @@
 ;// in Scala
 ;df.select("ORIGIN_COUNTRY_NAME", "DEST_COUNTRY_NAME").distinct().count()
 
-(println (q df
-            (group :ORIGIN_COUNTRY_NAME :DEST_COUNTRY_NAME)
-            (count-s)))
+(q df
+   (group :ORIGIN_COUNTRY_NAME :DEST_COUNTRY_NAME)
+   (count-s)
+   println)
 
 ;// in Scala
 ;df.select("ORIGIN_COUNTRY_NAME").distinct().count()
 
-(println (q df (group :ORIGIN_COUNTRY_NAME) (count-s)))
+(q df (group :ORIGIN_COUNTRY_NAME) (count-s) println)
 
-;;TODO NOT FINISHED
+;;val seed = 5
+;val withReplacement = false
+;val fraction = 0.5
+;df.sample(withReplacement, fraction, seed).count()
+
+(def seed 5)
+(def with-replacement false)
+(def fraction 0.5)
+
+(-> df (.sample with-replacement fraction seed) (count-s) println)
+
+;// in Scala
+;val dataFrames = df.randomSplit(Array(0.25, 0.75), seed)
+;dataFrames(0).count() > dataFrames(1).count() // False
+
+(def dataframes (-> df (.randomSplit (double-array [0.25 0.75]) seed)))
+(-> (aget dataframes 0) count-s println)
+
+;;import org.apache.spark.sql.Row
+;val schema = df.schema
+;val newRows = Seq(
+;  Row("New Country", "Other Country", 5L),
+;  Row("New Country 2", "Other Country 3", 1L)
+;)
+;val parallelizedRows = spark.sparkContext.parallelize(newRows)
+;val newDF = spark.createDataFrame(parallelizedRows, schema)
+;df.union(newDF)
+;  .where("count = 1")
+;  .where($"ORIGIN_COUNTRY_NAME" =!= "United States")
+;  .show() // get all of them and we'll see our new rows at the end
+
+(def newDF (seq->df spark
+                    [["New Country" "Other Country" 5] ["New Country 2" "Other Country 3" 1]]
+                    (.schema df)))
+
+(q df
+   (union-with newDF)
+   ((= :count 1) (not= :ORIGIN_COUNTRY_NAME "United States"))
+   .show)
+
+;;df.sort("count").show(5)
+;df.orderBy("count", "DEST_COUNTRY_NAME").show(5)
+;df.orderBy(col("count"), col("DEST_COUNTRY_NAME")).show(5)
+
+
+(q df (sort :count) (.show 5))
+(q df (sort :count :DEST_COUNTRY_NAME) (show 5))
+
+;;df.orderBy(expr("count desc")).show(2)
+;df.orderBy(desc("count"), asc("DEST_COUNTRY_NAME")).show(2)
+
+(q df (sort :!count) (show 2))
+(q df (sort :!count :DEST_COUNTRY_NAME) (show 2))
+
+;;df.limit(5).show()
+
+(q df (limit 5) show)
+
+;;df.orderBy(expr("count desc")).limit(6).show()
+
+(q df (sort :!count) (limit 6) show)
+
+;df.rdd.getNumPartitions // 1
+
+(-> df (.rdd) (.getNumPartitions) println)
+
+;df.repartition(5)
+;df.repartition(col("DEST_COUNTRY_NAME"))
+;df.repartition(5, col("DEST_COUNTRY_NAME"))
+;df.repartition(5, col("DEST_COUNTRY_NAME")).coalesce(2)
+
+(-> df (repartition 5 :DEST_COUNTRY_NAME) .rdd .getNumPartitions println)
+
+;;val collectDF = df.limit(10)
+;collectDF.take(5) // take works with an Integer count
+;collectDF.show() // this prints it out nicely
+;collectDF.show(5, false)
+;collectDF.collect()
+;collectDF.toLocalIterator()
+
+(def collectDF (-> df (limit 10)))
+(show collectDF)
+(show collectDF 5 false)
+(print-rows (take-rows collectDF 5))
+(-> collectDF .collectAsList print-rows)
+(print-rows (-> df .toLocalIterator .next))

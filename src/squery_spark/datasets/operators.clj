@@ -188,7 +188,7 @@
   (functions/to_date (column col)))
 
 (defn col [c]
-  (functions/col c))
+  (functions/col (if (keyword? c) (name c) c)))
 
 (defn format-number [col d]
   (functions/format_number (column col) d))
@@ -451,6 +451,5 @@
     limit squery-spark.datasets.stages/limit
     join squery-spark.datasets.stages/join
     union-with squery-spark.datasets.stages/union-with
-    take-rows squery-spark.datasets.stages/take-rows
 
     ])

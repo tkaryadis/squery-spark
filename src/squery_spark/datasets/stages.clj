@@ -141,9 +141,3 @@
 
 (defn union-with [df1 df2]
   (.union df1 df2))
-
-;;not dataset return
-
-(defn take-rows [df n]
-  (.takeAsList df n))
-
