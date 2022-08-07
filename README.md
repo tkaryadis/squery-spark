@@ -17,10 +17,10 @@ in strings like in SQL.
 ## Design goals
 
 1. be like clojure (use clojure way/names, and spark's way after)
-2. be like [cMQL](https://cmql.org/documentation/) the MongoDB query language made
+2. be like [cMQL](https://cmql.org/documentation/) the MongoDB query language
 3. use macros, to avoid the need for namespace qualified names inside the queries
 4. be programmable, no code in strings
-5. be simpler than all alternatives, using Clojure features
+5. be simpler than all alternatives, including SQL
  
 ## Example
 
