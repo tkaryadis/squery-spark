@@ -5,7 +5,7 @@ Query language for Apache-Spark.
 Clojure is used because    
  1. runs on JVM    
  2. its a general programming language
- 3. its ideal language to make DSL's     
+ 3. has macros and its ideal language to make DSL's     
  4. its dynamic simple and practical    
  5. its functional allowing natural data processing   
  6. it has tree syntax, and can represent more complex pipelines   
@@ -13,6 +13,12 @@ Clojure is used because
 Those allows Clojure to be simpler from all alternatives Java,Scala,Python.  
 And because its a general programming language we dont have to write queries
 in strings like in SQL.
+
+## Design goals
+
+1. be like clojure (use clojure way/names, and spark's way after)
+2. use macros, to avoid the need for namespace qualified names inside the queries
+3. be programmable, like java,scala,python, but simpler than all including SQL
 
 ## Example
 
