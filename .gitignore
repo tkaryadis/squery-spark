@@ -18,3 +18,4 @@ pom.xml.asc
 /forrdd-sparkplug
 /code/
 /data-used/delta-lake/
+/.idea/

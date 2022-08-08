@@ -30,14 +30,6 @@
 
 (def delta-table (DeltaTable/forPath (str data-path "/delta-table")))
 
-;;Update
-;;deltaTable.update(
-;  functions.expr("id % 2 == 0"),
-;  new HashMap<String, Column>() {{
-;    put("id", functions.expr("id + 100"));
-;  }}
-;);
-
 (println "Before update")
 (-> spark .read (.format "delta") (.load (str data-path "/delta-table")) .show)
 

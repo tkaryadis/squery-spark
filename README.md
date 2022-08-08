@@ -1,6 +1,6 @@
 # SQuery-spark
 
-Query language and data processing library for Apache-Spark.    
+Querying and data processing Clojure library, for Apache-Spark  
 
 Clojure is used because    
  1. runs on JVM    
@@ -8,7 +8,7 @@ Clojure is used because
  3. has macros and its ideal language to make DSL's     
  4. its dynamic simple and practical    
  5. its functional allowing natural data processing   
- 6. it has tree syntax, and can represent more complex pipelines   
+ 6. it has tree syntax, and can represent more complex nested pipelines   
 
 This allows Clojure to be simpler from all alternatives Java,Scala,Python.  
 And because it's a general programming language we don't have to write queries
@@ -16,14 +16,14 @@ in strings like in SQL.
 
 ## Design goals
 
-1. to have on Clojure syntax, and Clojure names, Clojure way  
+1. to have Clojure like syntax, and Clojure names, 
    (see [cMQL](https://cmql.org/documentation/) the MongoDB query language that is based on Clojure syntax)
 2. use macro to use the Clojure operators inside the queries without namespace qualified names
 3. be simple as compact and simple as possible
 4. be programmable, no code in strings like SQL
 5. be simpler than all alternatives, Java,Scala,Python, including SQL
 
-Overall to feel as Clojure was a query language
+Overall to feel as Clojure was a query language for spark.
  
 ## Example
 
