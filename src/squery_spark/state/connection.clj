@@ -3,6 +3,11 @@
            (org.apache.spark.api.java JavaSparkContext)
            (org.apache.spark SparkConf)))
 
+;;.config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+;    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+;
+;spark = configure_spark_with_delta_pip(builder).getOrCreate()
+
 (defn get-spark-session []
   (let [conf (-> (SparkConf.)
                  (.setMaster "local[*]")
@@ -12,6 +17,8 @@
                  )
         spark-session (-> (SparkSession/builder)
                           (.config conf)
+                          (.config "spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+                          (.config "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
                           (.getOrCreate))]
     spark-session))
 

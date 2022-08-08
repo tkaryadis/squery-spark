@@ -1,10 +1,12 @@
 (ns squery-spark.spark_definitive_book.ch03
   (:refer-clojure :only [])
-  (:require [squery-spark.datasets.query :refer :all]
+  (:require [squery-spark.datasets.queries :refer :all]
             [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
             [squery-spark.datasets.stages :refer :all]
             [squery-spark.datasets.operators :refer :all]
-            [squery-spark.datasets.rows :refer :all])
+            [squery-spark.datasets.schema :refer :all]
+            [squery-spark.datasets.rows :refer :all]
+            [squery-spark.datasets.utils :refer :all])
   (:refer-clojure)
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql SparkSession Dataset)

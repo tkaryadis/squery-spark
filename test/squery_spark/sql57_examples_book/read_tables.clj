@@ -1,6 +1,6 @@
 (ns squery-spark.sql57_examples_book.read-tables
   (:refer-clojure :only [])
-  (:require [squery-spark.datasets.query :refer :all]
+  (:require [squery-spark.datasets.queries :refer :all]
             [squery-spark.datasets.stages :refer :all]
             [squery-spark.datasets.operators :refer :all])
   (:refer-clojure))

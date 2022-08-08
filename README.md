@@ -1,6 +1,6 @@
 # SQuery-spark
 
-Query language for Apache-Spark.    
+Query language and data processing library for Apache-Spark.    
 
 Clojure is used because    
  1. runs on JVM    
@@ -52,15 +52,19 @@ The above using Java interop
    (.select (into-array [(div (col "sum") (col "avg"))])))
 ```
 
+## Learn 
+
+For overview `test.query_spark.qtest.clj`  
+
+See test/squery_spark, for now 2 books code is written in SQuery
+
+1. SQL Practice Problems: 57 beginning, intermediate, and advanced challenges for you to solve
+   using a “learn-by-doing” approach , by Sylvia Moestl Vasilik  (completed)
+2. Spark: The Definitive Guide: Big Data Processing Made Simple (under construction)  
 
 ## Usage
 
-For overview `test.query_spark.qtest.clj`  
-For SQL examples implemented in SQuery see the folder `squery-spark.sql-book-squery`
-
-Don't use yet.  
-It's under construction.For now a small subset of the Dataset api's are implemented.    
-SQuery-spark follows the syntax of [cmql](https://cmql.org/documentation/) (made for MongoDB).  
+Don't use yet. It's under construction and constantly changes. Use it for testing only.
 
 ## License
 
