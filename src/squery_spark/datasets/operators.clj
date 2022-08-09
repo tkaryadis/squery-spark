@@ -11,8 +11,9 @@
                             first last merge max min
                             str subs re-find re-matcher re-seq replace identity])
   (:require [clojure.core :as c]
-            [squery-spark.datasets.internal.common :refer [column column columns nested2]]
-            [squery-spark.datasets.schema :refer [schema-types]])
+            [squery-spark.datasets.internal.common :refer [column column columns]]
+            [squery-spark.datasets.schema :refer [schema-types]]
+            [squery-spark.utils.utils :refer [nested2]])
   (:import [org.apache.spark.sql functions Column]
            (org.apache.spark.sql.expressions Window WindowSpec)))
 
@@ -326,7 +327,7 @@
 (defn concat
   "works on strings, binary and arrays"
   [& cols]
-  (functions/concat (into-array ^Column (columns cols))))
+  (functions/concat (into-array Column (columns cols))))
 
 (defn str
   "concat just for strings"
@@ -363,14 +364,18 @@
 
 (defn todf
   ([df & col-names]
-   (.toDF df (into-array ^String (c/map name col-names))))
+   (.toDF df (into-array String (c/map name col-names))))
   ([df] (.toDF df)))
 
 
 ;;---------------------------------------------------------
 
+;;TODO no need to override clojure, i can have internal names with other names
+;;TODO possible bug if this enviroment is moved with a macro to another place for example -> does it
 (def operators-mappings
-  '[+ squery-spark.datasets.operators/+
+  '[
+    ;;Clojure overrides
+    + squery-spark.datasets.operators/+
     inc squery-spark.datasets.operators/inc
     - squery-spark.datasets.operators/-
     dec squery-spark.datasets.operators/dec
@@ -398,7 +403,7 @@
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
     day-of-month squery-spark.datasets.operators/day-of-month
-    c squery-spark.datasets.operators/last-day-of-month
+    last-day-of-month squery-spark.datasets.operators/last-day-of-month
     concat squery-spark.datasets.operators/concat
     str squery-spark.datasets.operators/str
 
@@ -451,5 +456,46 @@
     limit squery-spark.datasets.stages/limit
     join squery-spark.datasets.stages/join
     union-with squery-spark.datasets.stages/union-with
+    as squery-spark.datasets.stages/as
+
+    ;;delta
+    merge- squery-spark.delta-lake.queries/merge-
+
+    ])
+
+(def core-operators-mappings
+  '[
+    + clojure.core/+
+    inc clojure.core/inc
+    - clojure.core/-
+    dec clojure.core/dec
+    * clojure.core/*
+    = clojure.core/=
+    not= clojure.core/not=
+    > clojure.core/>
+    >= clojure.core/>=
+    < clojure.core/<
+    <= clojure.core/<=
+    and clojure.core/and
+    or clojure.core/or
+    if- clojure.core/if-
+    if-not clojure.core/if-not
+    true? clojure.core/true?
+    false? clojure.core/false?
+    nil? clojure.core/nil?
+    if-nil? clojure.core/if-nil?
+    some? clojure.core/some?
+    date clojure.core/date
+    format-number clojure.core/format-number
+    re-find? clojure.core/re-find?
+    contains? clojure.core/contains?
+    date-to-string clojure.core/date-to-string
+    year clojure.core/year
+    month clojure.core/month
+    day-of-month clojure.core/day-of-month
+    last-day-of-month clojure.core/last-day-of-month
+    concat clojure.core/concat
+    str clojure.core/str
+
 
     ])

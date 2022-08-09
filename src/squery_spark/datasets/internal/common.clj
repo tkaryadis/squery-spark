@@ -116,11 +116,8 @@
   ([ms]
    (single-maps ms #{})))
 
-(defn nested2 [f args]
-  (let [first-value (f (first args) (second args))
-        args (rest (rest args))]
-    (loop [args args
-           nested-f first-value]
-      (if (empty? args)
-        nested-f
-        (recur (rest args) (f (first args) nested-f))))))
+(defn string-keys-column-values [m]
+  (reduce (fn [new-m k]
+            (assoc new-m (name k) (column (get m k))))
+          {}
+          (keys m)))

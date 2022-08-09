@@ -35,7 +35,8 @@
   ([table & args]
    (let [args (into [] args)]
      `(let ~squery-spark.datasets.operators/operators-mappings
-        (squery-spark.delta-lake.queries/delete-fn ~table ~args)))))
+        (squery-spark.delta-lake.queries/delete-fn ~table
+                                                   ~args)))))
 
 (defn update-m [m]
   (partial #(.update %2 %1) (string-keys-column-values m)))

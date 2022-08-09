@@ -27,3 +27,6 @@
   `(let ~squery-spark.datasets.operators/operators-mappings
      (-> ~@args)))
 
+(defmacro not-sq [arg]
+  `(let ~squery-spark.datasets.operators/core-operators-mappings
+     ~arg))
