@@ -141,3 +141,6 @@
 
 (defn union-with [df1 df2]
   (.union df1 df2))
+
+(defn as [df new-alias]
+  (.as df (name new-alias)))

@@ -33,3 +33,12 @@
             {}
             (keys m))
     m))
+
+(defn nested2 [f args]
+  (let [first-value (f (first args) (second args))
+        args (rest (rest args))]
+    (loop [args args
+           nested-f first-value]
+      (if (empty? args)
+        nested-f
+        (recur (rest args) (f (first args) nested-f))))))
