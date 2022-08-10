@@ -19,3 +19,6 @@ pom.xml.asc
 /code/
 /data-used/delta-lake/
 /.idea/
+/data-used/delta-lake-docs/
+/test/squery_spark/delta_lake_docs/spark-warehouse/
+/test/squery_spark/spark_definitive_book/spark-warehouse/

@@ -106,15 +106,11 @@
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
-
-(defn and-internal [col1 col2]
-  (.and (column col1) (column col2)))
-
 (defn and [& cols]
-  (nested2 #(.and %1 %2)  cols))
+  (nested2 #(.and (column %1) (column %2))  cols))
 
-(defn or [col1 col2]
-  (.or (column col1) (column col2)))
+(defn or [& cols]
+  (nested2 #(.or (column %1) (column %2)) cols))
 
 (defn not [col]
   (functions/not (column col)))
@@ -167,8 +163,11 @@
   [col]
   (.isNull (column col)))
 
-(defn if-nil? [col nil-value]
-  (if- (nil? col) (column nil-value) (column col)))
+(defn if-nil? [col nil-value-col]
+  (if- (nil? col) (column nil-value-col) (column col)))
+
+(defn first-not-nil [& cols]
+  (functions/coalesce (into-array ^Column (columns cols))))
 
 (defn some? [col]
   (.isNotNull (column col)))
@@ -185,8 +184,9 @@
                         :else
                         to-type)))
 
-(defn date [col]
-  (functions/to_date (column col)))
+(defn date
+  ([col] (functions/to_date (column col)))
+  ([col string-format] (functions/to_date (column col) string-format)))
 
 (defn col [c]
   (functions/col (if (keyword? c) (name c) c)))
@@ -334,6 +334,16 @@
   [& cols]
   (apply concat cols))
 
+(defn count-str [col]
+  (functions/length (column col)))
+
+(defn take-str
+  ([start-int len-int col] (functions/substring (column col) start-int len-int))
+  ([start-int col] (functions/substring (column col) start-int Integer/MAX_VALUE)))
+
+(defn replace [col match-col replacement-col]
+  (functions/regexp_replace (column col) (column match-col) (column replacement-col)))
+
 ;;--------------------------Dates-------------------------------------------
 
 (defn date-to-string [col date-format]
@@ -394,6 +404,7 @@
     false? squery-spark.datasets.operators/false?
     nil? squery-spark.datasets.operators/nil?
     if-nil? squery-spark.datasets.operators/if-nil?
+    first-not-nil squery-spark.datasets.operators/first-not-nil
     some? squery-spark.datasets.operators/some?
     date squery-spark.datasets.operators/date
     format-number squery-spark.datasets.operators/format-number
@@ -406,6 +417,9 @@
     last-day-of-month squery-spark.datasets.operators/last-day-of-month
     concat squery-spark.datasets.operators/concat
     str squery-spark.datasets.operators/str
+    take-str squery-spark.datasets.operators/take-str
+    count-str squery-spark.datasets.operators/count-str
+    replace squery-spark.datasets.operators/replace
 
     ;;accumulators
     sum squery-spark.datasets.operators/sum
@@ -476,24 +490,14 @@
     >= clojure.core/>=
     < clojure.core/<
     <= clojure.core/<=
-    and clojure.core/and
-    or clojure.core/or
-    if- clojure.core/if-
-    if-not clojure.core/if-not
+    ;and clojure.core/and          ;;TODO
+    ;or clojure.core/or
+    ;if-not clojure.core/if-not
     true? clojure.core/true?
     false? clojure.core/false?
     nil? clojure.core/nil?
-    if-nil? clojure.core/if-nil?
     some? clojure.core/some?
-    date clojure.core/date
-    format-number clojure.core/format-number
-    re-find? clojure.core/re-find?
     contains? clojure.core/contains?
-    date-to-string clojure.core/date-to-string
-    year clojure.core/year
-    month clojure.core/month
-    day-of-month clojure.core/day-of-month
-    last-day-of-month clojure.core/last-day-of-month
     concat clojure.core/concat
     str clojure.core/str
 

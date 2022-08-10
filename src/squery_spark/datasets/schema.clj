@@ -9,6 +9,7 @@
    :double    DataTypes/DoubleType
    :float     DataTypes/FloatType
    :integer   DataTypes/IntegerType
+   :int       DataTypes/IntegerType
    :long      DataTypes/LongType
    :null      DataTypes/NullType
    :short     DataTypes/ShortType

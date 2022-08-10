@@ -22,7 +22,7 @@
 
 ;(try (-> spark (.table "default.mytable") delete) (catch Exception e ""))
 
-(-> (DeltaTable/forPath (c/str data-path "/mytable")) delete)
+(time (-> (DeltaTable/forPath (c/str data-path "/mytable")) delete))
 
 ;;-------------------Create--------------------------------------------------------------
 

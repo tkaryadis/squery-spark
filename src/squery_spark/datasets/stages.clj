@@ -27,13 +27,21 @@
 
 ;;TODO df.withColumnRenamed("DEST_COUNTRY_NAME", "dest").columns,maybe {!field1 : field2}
 (defn add-columns [df m]
-  (let [m (reduce (fn [m1 k]
+  (let [;m
+        #_(reduce (fn [m1 k]
                     (let [v (get m k)]
                       (assoc m1 (name k) (column v))))
                   {}
                   (keys m))
-        m (HashMap. m)]
-    (.withColumns df m)))
+        ;m (HashMap. m)
+        df (reduce (fn [df k]
+                     (.withColumn df (name k) (column (c/get m k))))
+                   df
+                   (keys m))
+        ]
+    ;(.withColumns ^Dataset df m)
+    df
+    ))
 
 (defn filter-columns [df fs]
   (let [and-filters (reduce (fn [value this]
