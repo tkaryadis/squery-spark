@@ -144,14 +144,20 @@
 
 (defn join
   ([df1 df2 join-condition]
-   (.join df1 df2 join-condition))
+   (.join df1 df2 (column join-condition)))
   ([df1 df2 join-condition join-type]
-   (.join df1 df2 join-condition (name join-type))))
+   (.join df1 df2 (column join-condition) (name join-type))))
 
 (defn union-with
   "union based on order of columns in the schema, ignores column names"
   [df1 df2]
   (.union df1 df2))
+
+(defn union-all-with
+  "union based on order of columns in the schema, ignores column names
+   union with possible duplicates"
+  [df1 df2]
+  (.unionAll df1 df2))
 
 (defn union-by-name
   "union based on column names"

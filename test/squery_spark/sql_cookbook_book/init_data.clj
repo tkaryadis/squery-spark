@@ -61,7 +61,7 @@
     (.execute))
 
 
-(-> (q emp-df {:HIREDATE (date :HIREDATE "dd-mm-yyyy")})
+(-> (q emp-df {:hiredate (date :hiredate "dd-mm-yyyy")})
     .write
     (.format "delta")
     (.mode "overwrite")
@@ -89,3 +89,61 @@
     (.format "delta")
     (.mode "overwrite")
     (.saveAsTable "default.dept"))
+
+(def bonus-df (seq->df spark
+                       [[7369 "14-03-2005" 1]
+                        [7900 "14-03-2005" 2]
+                        [7788 "14-03-2005" 3]]
+                       [[:empno :long] :received [:type :long]]))
+
+(-> (DeltaTable/createOrReplace spark)
+    (table-columns [[:empno :long] [:received :date] [:type :long]])
+    (.property "description" "bonus")
+    (.tableName "default.bonus")
+    (.location (str data-path "/bonus"))
+    (.execute))
+
+(-> (q bonus-df {:received (date :received "dd-mm-yyyy")})
+    .write
+    (.format "delta")
+    (.mode "overwrite")
+    (.saveAsTable "default.bonus"))
+
+
+(def bonus-df1 (seq->df spark
+                       [[7934 "17-03-2005" 1]
+                        [7934 "15-02-2005" 2]
+                        [7839 "15-02-2005" 3]
+                        [7782 "15-02-2005" 1]]
+                       [[:empno :long] :received [:type :long]]))
+
+(-> (DeltaTable/createOrReplace spark)
+    (table-columns [[:empno :long] [:received :date] [:type :long]])
+    (.property "description" "bonus1")
+    (.tableName "default.bonus1")
+    (.location (str data-path "/bonus1"))
+    (.execute))
+
+(-> (q bonus-df1 {:received (date :received "dd-mm-yyyy")})
+    .write
+    (.format "delta")
+    (.mode "overwrite")
+    (.saveAsTable "default.bonus1"))
+
+(def bonus-df2 (seq->df spark
+                        [[7934 "17-03-2005" 1]
+                         [7934 "15-02-2005" 2]]
+                        [[:empno :long] :received [:type :long]]))
+
+(-> (DeltaTable/createOrReplace spark)
+    (table-columns [[:empno :long] [:received :date] [:type :long]])
+    (.property "description" "bonus2")
+    (.tableName "default.bonus2")
+    (.location (str data-path "/bonus2"))
+    (.execute))
+
+(-> (q bonus-df2 {:received (date :received "dd-mm-yyyy")})
+    .write
+    (.format "delta")
+    (.mode "overwrite")
+    (.saveAsTable "default.bonus2"))

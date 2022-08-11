@@ -276,8 +276,22 @@
      {'myfield'  (wfield (rank) (-> (wspec) (sort :price)))}"
   (Window/partitionBy (into-array Column [])))
 
-(defn rank []
+(defn rank
+  "same order = same number, but the counter
+   still increases on duplicates like 1 1 3"
+  []
   (functions/rank))
+
+(defn dense-rank
+  "same order = same number, but the counter
+   doesn't increase like 1 1 2"
+  []
+  (functions/dense_rank))
+
+(defn row-number
+  "row number inside the window"
+  []
+  (functions/row_number))
 
 (defn wgroup
   ([& args]
@@ -431,6 +445,8 @@
     conj-set  squery-spark.datasets.operators/conj-set
     wfield squery-spark.datasets.operators/wfield
     rank  squery-spark.datasets.operators/rank
+    dense-rank squery-spark.datasets.operators/dense-rank
+    row-number squery-spark.datasets.operators/row-number
     wgroup squery-spark.datasets.operators/wgroup
     wsort squery-spark.datasets.operators/wsort
     wrange squery-spark.datasets.operators/wrange
@@ -471,6 +487,7 @@
     join squery-spark.datasets.stages/join
     union-with squery-spark.datasets.stages/union-with
     union-by-name squery-spark.datasets.stages/union-by-name
+    union-all-with squery-spark.datasets.stages/union-all-with
     as squery-spark.datasets.stages/as
     intersection-with squery-spark.datasets.stages/intersection-with
     difference-with squery-spark.datasets.stages/difference-with
