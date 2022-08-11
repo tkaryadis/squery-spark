@@ -18,6 +18,7 @@
 ;; [:CustomerID (lit 5) {:price (coll "UnitPrice")}]
 ;; (.select ^Dataset (into-array [(col "CustomerID")  (lit 5) (.as (col "UnitPrice") "price")]))
 ;;TODO select can take also arguments like "*" in spark
+;;i can add new coloumns with {} or just with literals
 (defn select
   "[:CustomerID (lit 5) {:price (coll \"UnitPrice\")}]
    (.select ^Dataset (into-array [(col \"CustomerID\")  (lit 5) (.as (col \"UnitPrice\") \"price\")]))"
@@ -147,8 +148,26 @@
   ([df1 df2 join-condition join-type]
    (.join df1 df2 join-condition (name join-type))))
 
-(defn union-with [df1 df2]
+(defn union-with
+  "union based on order of columns in the schema, ignores column names"
+  [df1 df2]
   (.union df1 df2))
 
-(defn as [df new-alias]
+(defn union-by-name
+  "union based on column names"
+  [df1 df2]
+  (.unionByName df1 df2))
+
+(defn intersection-with [df1 df2]
+  (.intersect ^Dataset df1 df2))
+
+(defn difference-with [df1 df2]
+  (.except df1 df2))
+
+(defn difference-all-with [df1 df2]
+  (.exceptAll df1 df2))
+
+(defn as
+  "example (q (as emp 'e') [:e.deptno])"
+  [df new-alias]
   (.as df (name new-alias)))

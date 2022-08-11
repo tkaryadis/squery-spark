@@ -470,7 +470,11 @@
     limit squery-spark.datasets.stages/limit
     join squery-spark.datasets.stages/join
     union-with squery-spark.datasets.stages/union-with
+    union-by-name squery-spark.datasets.stages/union-by-name
     as squery-spark.datasets.stages/as
+    intersection-with squery-spark.datasets.stages/intersection-with
+    difference-with squery-spark.datasets.stages/difference-with
+    difference-all-with squery-spark.datasets.stages/difference-all-with
 
     ;;delta
     merge- squery-spark.delta-lake.queries/merge-

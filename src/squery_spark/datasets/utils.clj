@@ -2,7 +2,7 @@
   (:require [squery-spark.state.connection :refer [get-java-spark-context]]
             [squery-spark.datasets.schema :refer [build-schema]]
             [squery-spark.datasets.internal.common :refer [columns]])
-  (:import (org.apache.spark.sql RowFactory Column)))
+  (:import (org.apache.spark.sql RowFactory Column SparkSession)))
 
 (defn parallelize [spark data]
   (-> (get-java-spark-context spark)
@@ -18,7 +18,7 @@
 
 (defn rdd->df [spark rdd schema]
   (let [schema (if (vector? schema) (build-schema schema) schema)]
-    (.createDataFrame spark rdd schema)))
+    (.createDataFrame ^SparkSession spark rdd schema)))
 
 (defn seq->df [spark seq schema]
   (let [rdd (seq->rdd spark seq)]
