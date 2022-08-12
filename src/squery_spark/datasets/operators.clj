@@ -13,7 +13,7 @@
   (:require [clojure.core :as c]
             [squery-spark.datasets.internal.common :refer [column column columns]]
             [squery-spark.datasets.schema :refer [schema-types]]
-            [squery-spark.utils.utils :refer [nested2]])
+            [squery-spark.utils.utils :refer [nested2 nested3]])
   (:import [org.apache.spark.sql functions Column]
            (org.apache.spark.sql.expressions Window WindowSpec)))
 
@@ -137,6 +137,12 @@
 (defn if-not [col-condition col-value col-else-value]
   (.otherwise (functions/when (functions/not (column col-condition)) (column col-value)) (column col-else-value)))
 
+(defn cond [& args]
+  (if (c/<= (c/count args) 4)
+    (if (c/= (c/count args) 4)     ;;the normal case cond with 2>= cases
+      (if- (c/first args) (c/second args) (c/nth args 3))
+      (throw (Exception. "Wrong number of arguments, cond requires >=4  arguments and even")))
+    (if- (c/first args) (c/second args) (apply cond (rest (rest args))))))
 
 
 ;;---------------------------Literal----------------------------------------
@@ -184,6 +190,12 @@
                         :else
                         to-type)))
 
+(defn string [col]
+  (.cast (column col) (c/get schema-types :string)))
+
+(defn long [col]
+  (.cast (column col) (c/get schema-types :long)))
+
 (defn date
   ([col] (functions/to_date (column col)))
   ([col string-format] (functions/to_date (column col) string-format)))
@@ -201,6 +213,9 @@
 
 (defn contains? [values col]
   (.isin (column col) (into-array values)))
+
+(defn explode [col]
+  (functions/explode (column col)))
 
 
 ;;-----------------SET (arrays/objects and nested)--------------------------
@@ -334,8 +349,8 @@
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
-(defn re-find? [match col]
-  (.rlike (column col) match))
+(defn re-find? [match-regex-string col]
+  (.rlike (column col) match-regex-string))
 
 
 (defn concat
@@ -357,6 +372,10 @@
 
 (defn replace [col match-col replacement-col]
   (functions/regexp_replace (column col) (column match-col) (column replacement-col)))
+
+(defn split-str
+  ([col pattern-string] (functions/split (column col) pattern-string))
+  ([col pattern-string limit-int] (functions/split (column col) pattern-string limit-int)))
 
 ;;--------------------------Dates-------------------------------------------
 
@@ -412,7 +431,9 @@
     <= squery-spark.datasets.operators/<=
     and squery-spark.datasets.operators/and
     or squery-spark.datasets.operators/or
+    not squery-spark.datasets.operators/not
     if- squery-spark.datasets.operators/if-
+    cond squery-spark.datasets.operators/cond
     if-not squery-spark.datasets.operators/if-not
     true? squery-spark.datasets.operators/true?
     false? squery-spark.datasets.operators/false?
@@ -424,6 +445,7 @@
     format-number squery-spark.datasets.operators/format-number
     re-find? squery-spark.datasets.operators/re-find?
     contains? squery-spark.datasets.operators/contains?
+    explode squery-spark.datasets.operators/explode
     date-to-string squery-spark.datasets.operators/date-to-string
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
@@ -434,6 +456,7 @@
     take-str squery-spark.datasets.operators/take-str
     count-str squery-spark.datasets.operators/count-str
     replace squery-spark.datasets.operators/replace
+    split-str squery-spark.datasets.operators/split-str
 
     ;;accumulators
     sum squery-spark.datasets.operators/sum
@@ -472,7 +495,8 @@
     div squery-spark.datasets.operators/div
     lit squery-spark.datasets.operators/lit
     cast squery-spark.datasets.operators/cast
-
+    string squery-spark.datasets.operators/string
+    long squery-spark.datasets.operators/long
 
     asc squery-spark.datasets.operators/asc
     desc squery-spark.datasets.operators/desc

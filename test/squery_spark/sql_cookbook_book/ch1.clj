@@ -57,11 +57,9 @@
 
 ;;8
 (q emp
-   {:status (if- (< :sal 2000)
-              "under-paid"
-              (if- (< :sal 4000)
-                "ok"
-                "over-paid"))}
+   {:status (cond (< :sal 2000) "under-paid"
+                  (< :sal 4000) "ok"
+                  :else "over-paid")}
    show)
 
 ;;9

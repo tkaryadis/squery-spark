@@ -274,18 +274,18 @@
 (def orders_next (df-read "Orders"))
 
 ;;56  TODO ALIAS
-(q orders
+(q (as orders :o)
    [:CustomerID {:InitialOrderDate :OrderDate} {:InitialOrderID :OrderID}]
-   (join (q orders_next
+   (join (q (as orders_next :onext)
             [:CustomerID
              {:NextOrderDate :OrderDate}
              {:NextOrderID :OrderID}])
-         (and (= [orders :CustomerID] [orders_next :CustomerID])
+         (and (= :o.CustomerID :onext.CustomerID)
               (< :InitialOrderDate :NextOrderDate)
               (> (days-diff :NextOrderDate :InitialOrderDate) 0)
               (<= (days-diff :NextOrderDate :InitialOrderDate) 5)))
    {:daysDiff (days-diff :NextOrderDate :InitialOrderDate)}
-   (unset [orders :CustomerID])
+   (unset :o.CustomerID)
    (sort :CustomerID)
    (.show 100))
 

@@ -141,7 +141,6 @@
          col2 (if (keyword? col2) (name col2) col2)]
      (.join df1 df2 (.equalTo (.col df1 col1) (.col df2 col2)) (name join-type)))))
 
-
 (defn join
   ([df1 df2 join-condition]
    (.join df1 df2 (column join-condition)))

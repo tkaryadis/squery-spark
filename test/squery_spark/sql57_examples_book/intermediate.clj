@@ -117,9 +117,9 @@
 
 ;;31
 ;;customers that didn't use EmployeeID=4 to take their order
-(q customers
-   (join orders
-         (and (= [customers :CustomerID] [orders :CustomerID]) (= :EmployeeID 4))
+(q (as customers :c)
+   (join (as orders :o)
+         (and (= :c.CustomerID :o.CustomerID) (= :EmployeeID 4))
          :left_anti)
    .show)
 

@@ -23,7 +23,7 @@
   (cond
 
     (vector? field)
-    (.col (first field) (name (second field)))
+    (functions/lit (into-array field))
 
     (keyword? field)
     (functions/col (name field))
@@ -50,9 +50,8 @@
   [field]
   (cond
 
-    ;;[df :field], notation for columns belonging to a df
     (vector? field)
-    (.col (first field) (name (second field)))
+    (functions/lit (into-array field))
 
     (keyword? field)
     (functions/col (name field))
