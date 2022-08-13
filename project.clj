@@ -17,9 +17,13 @@
                  ;[com.datastax.spark/spark-cassandra-connector-embedded_2.11 "2.4.0"]
                  ;[org.postgresql/postgresql "42.2.5"]
                  ]
-  :aot []
+
+  :aot [
+        squery-spark.udftest
+        ]
 
   :plugins [[lein-codox "0.10.7"]]
-  :javac-options ["-source" "1.8" "-target" "1.8"]
-  :jvm-opts ^:replace ["-server" "-Xmx2g"]
+  ;:javac-options ["-source" "1.8" "-target" "1.8"]
+  ;:jvm-opts ^:replace ["-server" "-Xmx2g"]
+  :main squery-spark.udftest
   :global-vars {*warn-on-reflection* false})

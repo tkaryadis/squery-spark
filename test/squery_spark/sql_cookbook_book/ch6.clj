@@ -25,6 +25,12 @@
 (def bonus2 (-> spark .read (.format "delta") (.load (str data-path "/bonus2"))))
 (def t1 (seq->df spark [[1]] [[:id :long]]))
 
+(q t1
+   {:a [1 2 3]}
+   show)
+
+(System/exit 0)
+
 ;;1
 (q t1
    [{:a "Clojure+Spark"}]
@@ -74,6 +80,6 @@
 
 ;;7
 ;; TODO map/filter/reduce etc on arrays
-(q t1
+#_(q t1
    [{:fullname (str "Stewie Griffin")}]
    {:initials (split-str :fullname "")})
