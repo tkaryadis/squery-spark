@@ -11,7 +11,9 @@
             [squery-spark.delta-lake.schema :refer :all]
             [squery-spark.datasets.udf :refer :all])
   (:refer-clojure)
-  (:require [clojure.core :as c])
+  (:require [clojure.core :as c]
+            [clojure.main :refer [demunge]]
+            )
   (:import (org.apache.spark.sql functions Column Dataset)
            (org.apache.spark.sql.expressions Window WindowSpec))
   (:gen-class)
@@ -27,17 +29,27 @@
 
 ;;-------------------------UDF-------------------------------------
 
-;;works re-run (without re-compile)
-(defudf spark myudf1 (fn [x] (* x 2)) 1 :long)
-(defudf spark myudf2 :long [x] (* x 2))
+#_(defudf spark myudf1 (fn [x] (* x 2)) 1 :long)
+#_(defudf spark myudf2 :long [x] (* x 2))
 
-(q t1
+#_(q t1
    {:a (myudf1 :id)}
    show)
 
-(q t1
+#_(q t1
    {:a (myudf2 :id)}
    show)
 
+(defnscala1 z (fn [x] (+ x 30)))
+
+(q t1
+   {:a [1 2 3]}
+   [(map z :a)]
+   show)
+
+(q t1
+   {:a [1 2 3]}
+   [(map1 (fn [x] (+ x 40)) :a)]
+   show)
 
 (defn -main [])

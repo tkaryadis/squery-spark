@@ -1,7 +1,9 @@
 (ns squery-spark.datasets.udf
-  (:require [squery-spark.state.state])
+  (:require [squery-spark.state.state]
+            [squery-spark.datasets.operators])
   (:import (org.apache.spark.sql.api.java UDF1 UDF0 UDF2 UDF3 UDF4)
-           [org.apache.spark.sql functions Column]))
+           [org.apache.spark.sql functions Column]
+           (scala Function0 Function1 Function2 Function3)))
 
 ;;---------UDF---------------------------------
 
@@ -90,3 +92,42 @@
 (defmacro defudaf [spark fname udaf-object]
   `(def ~fname (register-udaf ~spark ~udaf-object)))
 
+;;----------------------------------scala functions--------------------------------------------------------------------
+
+(defn ->scala-function0 [f]
+  (reify Function0 (apply [_] (f))))
+
+(defmacro defnscala0 [name f]
+  `(let ~squery-spark.datasets.operators/operators-mappings
+     (def ~(symbol name) (squery-spark.datasets.udf/->scala-function0 ~f))))
+
+(defn ->scala-function1 [f]
+  (reify Function1 (apply [_ x] (f x))))
+
+(defmacro defnscala1 [name f]
+  `(let ~squery-spark.datasets.operators/operators-mappings
+     (def ~(symbol name) (squery-spark.datasets.udf/->scala-function1 ~f))))
+
+(defn ->scala-function2 [f]
+  (reify Function2 (apply [_ x y] (f x y))))
+
+(defmacro defnscala2 [name f]
+  `(let ~squery-spark.datasets.operators/operators-mappings
+     (def ~(symbol name) (squery-spark.datasets.udf/->scala-function2 ~f))))
+
+(defn ->scala-function3 [f]
+  (reify Function3 (apply [_ x y z] (f x y z))))
+
+(defmacro defnscala3 [name f]
+  `(let ~squery-spark.datasets.operators/operators-mappings
+     (def ~(symbol name) (squery-spark.datasets.udf/->scala-function3 ~f))))
+
+#_(-> (class myf1)
+      (print-str)
+      (demunge)
+      (symbol)
+      (find-var)
+      (meta)
+      (prn))
+
+;(prn (meta #'myf1))

@@ -8,7 +8,8 @@
             [squery-spark.datasets.rows :refer :all]
             [squery-spark.datasets.utils :refer :all]
             [squery-spark.delta-lake.queries :refer :all]
-            [squery-spark.delta-lake.schema :refer :all])
+            [squery-spark.delta-lake.schema :refer :all]
+            [squery-spark.datasets.udf :refer :all])
   (:refer-clojure)
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql functions Column)
@@ -24,12 +25,6 @@
 (def bonus1 (-> spark .read (.format "delta") (.load (str data-path "/bonus1"))))
 (def bonus2 (-> spark .read (.format "delta") (.load (str data-path "/bonus2"))))
 (def t1 (seq->df spark [[1]] [[:id :long]]))
-
-(q t1
-   {:a [1 2 3]}
-   show)
-
-(System/exit 0)
 
 ;;1
 (q t1
@@ -79,7 +74,8 @@
    show)
 
 ;;7
-;; TODO map/filter/reduce etc on arrays
-#_(q t1
+(q t1
    [{:fullname (str "Stewie Griffin")}]
-   {:initials (split-str :fullname "")})
+   {:initials (split-str :fullname " ")}
+   {:initials (map1 (comp #(str % ".") (partial take-str 0 1)) :initials)}
+   (show false))

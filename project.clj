@@ -19,7 +19,7 @@
                  ]
 
   :aot [
-        squery-spark.udftest
+        ;squery-spark.udftest
         ]
 
   :plugins [[lein-codox "0.10.7"]]

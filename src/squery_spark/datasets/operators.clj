@@ -15,7 +15,8 @@
             [squery-spark.datasets.schema :refer [schema-types]]
             [squery-spark.utils.utils :refer [nested2 nested3]])
   (:import [org.apache.spark.sql functions Column]
-           (org.apache.spark.sql.expressions Window WindowSpec)))
+           (org.apache.spark.sql.expressions Window WindowSpec)
+           (scala Function1)))
 
 ;;Operators for columns
 
@@ -216,6 +217,12 @@
 
 (defn explode [col]
   (functions/explode (column col)))
+
+(defn map [f col]
+  (functions/transform (column col) f))
+
+(defn map1 [f col]
+  (functions/transform (column col) (reify Function1 (apply [_ x] (f x)))))
 
 
 ;;-----------------SET (arrays/objects and nested)--------------------------
@@ -446,6 +453,8 @@
     re-find? squery-spark.datasets.operators/re-find?
     contains? squery-spark.datasets.operators/contains?
     explode squery-spark.datasets.operators/explode
+    map squery-spark.datasets.operators/map
+    map1 squery-spark.datasets.operators/map1
     date-to-string squery-spark.datasets.operators/date-to-string
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
