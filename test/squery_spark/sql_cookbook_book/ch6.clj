@@ -13,7 +13,8 @@
   (:refer-clojure)
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql functions Column)
-           (org.apache.spark.sql.expressions Window WindowSpec)))
+           (org.apache.spark.sql.expressions Window WindowSpec)
+           (org.apache.spark.sql.types DataTypes ArrayType)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -81,10 +82,13 @@
    {:initials (reduce (fn [v m] (str v m)) "" :initials)}
    (show false))
 
-;;7 alt TODO
-#_(q t1
+;;7 alt
+(q t1
    [{:fullname (str "Stewie Griffin")}]
-   {:initials (reduce (fn [v m] (str v m))
-                      [-1 ""]
-                      :fullname)}
+   {:initials (second (reduce (fn [v m]
+                                (if- (= (get v 0) " ")
+                                  [m (str (get v 1) m ".")]
+                                  [m (get v 1)]))
+                              [" " ""]
+                              (split-str :fullname "")))}
    (show false))

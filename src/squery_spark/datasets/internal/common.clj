@@ -22,8 +22,10 @@
   [field]
   (cond
 
-    (vector? field)
-    (functions/lit (into-array field))
+    (vector? field)                                         ;;TODO, just lit or array?
+    ;(functions/lit (into-array field))
+    #_(functions/array (into-array Column field))
+    (functions/array (into-array Column (mapv column field)))
 
     (keyword? field)
     (functions/col (name field))
@@ -51,7 +53,8 @@
   (cond
 
     (vector? field)
-    (functions/lit (into-array field))
+    ;(functions/lit (into-array field))
+    (functions/array (into-array Column (mapv column field)))
 
     (keyword? field)
     (functions/col (name field))

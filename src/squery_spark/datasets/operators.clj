@@ -8,12 +8,14 @@
                              get get-in assoc assoc-in dissoc
                             concat conj contains? range reverse count take subvec empty?
                             fn map filter reduce
-                            first last merge max min
-                            str subs re-find re-matcher re-seq replace identity])
+                            first second last merge max min
+                            str subs re-find re-matcher re-seq replace identity
+                            long-array])
   (:require [clojure.core :as c]
             [squery-spark.datasets.internal.common :refer [column column columns]]
             [squery-spark.datasets.schema :refer [schema-types]]
-            [squery-spark.utils.utils :refer [nested2 nested3]])
+            [squery-spark.utils.utils :refer [nested2 nested3]]
+            [squery-spark.datasets.schema :refer [array-type]])
   (:import [org.apache.spark.sql functions Column]
            (org.apache.spark.sql.expressions Window WindowSpec)
            (scala Function1 Function2)))
@@ -197,6 +199,10 @@
 (defn long [col]
   (.cast (column col) (c/get schema-types :long)))
 
+(defn long-array
+  ([col] (cast (column col) (array-type :long)))
+  ([] (cast (column []) (array-type :long))))
+
 (defn date
   ([col] (functions/to_date (column col)))
   ([col string-format] (functions/to_date (column col) string-format)))
@@ -206,6 +212,9 @@
 
 (defn format-number [col d]
   (functions/format_number (column col) d))
+
+(defn array [& cols]
+  (functions/array (into-array Column (columns cols))))
 
 
 ;;---------------------------Arrays-----------------------------------------
@@ -233,6 +242,18 @@
   (functions/aggregate (column col-collection)
                        (column initial-col)
                        (reify Function2 (apply [_ x y] (f x y)))))
+
+(defn get [col-colletion index-number]
+  (functions/element_at (column col-colletion) (c/int (c/inc index-number))))
+
+(defn first [col-collection]
+  (get col-collection 0))
+
+(defn second [col-collection]
+  (get col-collection 1))
+
+(defn conj [col-array col-new-member]
+  (functions/concat (into-array Column [(column col-array) (functions/array (into-array Column [col-new-member]))])))
 
 
 
@@ -277,7 +298,7 @@
 (defn conj-set [col]
   (functions/collect_set ^Column (column col)))
 
-(defn first [col]
+(defn first-a [col]
   (functions/first (column col)))
 
 (defn last [col]
@@ -464,10 +485,14 @@
     format-number squery-spark.datasets.operators/format-number
     re-find? squery-spark.datasets.operators/re-find?
     contains? squery-spark.datasets.operators/contains?
+    first squery-spark.datasets.operators/first
+    second squery-spark.datasets.operators/second
     explode squery-spark.datasets.operators/explode
     map squery-spark.datasets.operators/map
     map1 squery-spark.datasets.operators/map1
+    conj squery-spark.datasets.operators/conj
     reduce squery-spark.datasets.operators/reduce
+    get squery-spark.datasets.operators/get
     date-to-string squery-spark.datasets.operators/date-to-string
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
@@ -497,7 +522,7 @@
     wrange squery-spark.datasets.operators/wrange
     wrows squery-spark.datasets.operators/wrows
     window squery-spark.datasets.operators/window
-    first squery-spark.datasets.operators/first
+    first-a squery-spark.datasets.operators/first-a
     last squery-spark.datasets.operators/last
     count-distinct squery-spark.datasets.operators/count-distinct
 
@@ -519,6 +544,7 @@
     cast squery-spark.datasets.operators/cast
     string squery-spark.datasets.operators/string
     long squery-spark.datasets.operators/long
+    long-array squery-spark.datasets.operators/long-array
 
     asc squery-spark.datasets.operators/asc
     desc squery-spark.datasets.operators/desc
