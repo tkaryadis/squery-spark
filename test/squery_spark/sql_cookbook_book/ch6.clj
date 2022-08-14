@@ -78,4 +78,13 @@
    [{:fullname (str "Stewie Griffin")}]
    {:initials (split-str :fullname " ")}
    {:initials (map1 (comp #(str % ".") (partial take-str 0 1)) :initials)}
+   {:initials (reduce (fn [v m] (str v m)) "" :initials)}
+   (show false))
+
+;;7 alt TODO
+#_(q t1
+   [{:fullname (str "Stewie Griffin")}]
+   {:initials (reduce (fn [v m] (str v m))
+                      [-1 ""]
+                      :fullname)}
    (show false))

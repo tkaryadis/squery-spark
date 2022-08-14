@@ -16,7 +16,7 @@
             [squery-spark.utils.utils :refer [nested2 nested3]])
   (:import [org.apache.spark.sql functions Column]
            (org.apache.spark.sql.expressions Window WindowSpec)
-           (scala Function1)))
+           (scala Function1 Function2)))
 
 ;;Operators for columns
 
@@ -223,6 +223,18 @@
 
 (defn map1 [f col]
   (functions/transform (column col) (reify Function1 (apply [_ x] (f x)))))
+
+;;aggregate(Column expr, Column initialValue, scala.Function2<Column,Column,Column> merge)
+;Applies a binary operator to an initial state and all elements in the array, and reduces this to a single state.
+;static Column	aggregate(Column expr, Column initialValue, scala.Function2<Column,Column,Column> merge, scala.Function1<Column,Column> finish)
+;Applies a binary operator to an initial state and all elements in the array, and reduces this to a single state.
+
+(defn reduce [f initial-col col-collection]
+  (functions/aggregate (column col-collection)
+                       (column initial-col)
+                       (reify Function2 (apply [_ x y] (f x y)))))
+
+
 
 
 ;;-----------------SET (arrays/objects and nested)--------------------------
@@ -455,6 +467,7 @@
     explode squery-spark.datasets.operators/explode
     map squery-spark.datasets.operators/map
     map1 squery-spark.datasets.operators/map1
+    reduce squery-spark.datasets.operators/reduce
     date-to-string squery-spark.datasets.operators/date-to-string
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
