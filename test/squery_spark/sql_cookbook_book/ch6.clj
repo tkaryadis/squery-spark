@@ -12,13 +12,17 @@
             [squery-spark.datasets.udf :refer :all])
   (:refer-clojure)
   (:require [clojure.core :as c])
-  (:import (org.apache.spark.sql functions Column)
+  (:import (org.apache.spark.sql functions Column RelationalGroupedDataset)
            (org.apache.spark.sql.expressions Window WindowSpec)
            (org.apache.spark.sql.types DataTypes ArrayType)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
 (def data-path "/home/white/IdeaProjects/squery-spark/data-used/sql-cookbook-book/")   ;;CHANGE THIS!!!
+
+#_(def test1 (seq->df spark [["greece" "takis" 39] ["greece" "mpampis" 37] ["usa" "kostas" 20] ["japan" "petros" 40] ["japan" "takis" 45]
+                           ["japan" "takis" 45]]
+                    [:country :name [:age :long]]))
 
 (def emp (-> spark .read (.format "delta") (.load (str data-path "/emp"))))
 (def dept (-> spark .read (.format "delta") (.load (str data-path "/dept"))))
@@ -78,7 +82,7 @@
 (q t1
    [{:fullname (str "Stewie Griffin")}]
    {:initials (split-str :fullname " ")}
-   {:initials (map1 (comp #(str % ".") (partial take-str 0 1)) :initials)}
+   {:initials (map (comp #(str % ".") (partial take-str 0 1)) :initials)}
    {:initials (reduce (fn [v m] (str v m)) "" :initials)}
    (show false))
 
@@ -92,3 +96,89 @@
                               [" " ""]
                               (split-str :fullname "")))}
    (show false))
+
+;;8
+(q emp
+   [:ename]
+   (sort (take-str -2 2 :ename))
+   show)
+
+;;9
+(q t1
+   [{:data (explode ["CLARK 7782 ACCOUNTING"
+                     "KING 7839 ACCOUNTING"
+                     "MILLER 7934 ACCOUNTING"
+                     "SMITH 7369 RESEARCH"
+                     "JONES 7566 RESEARCH"
+                     "SCOTT 7788 RESEARCH"
+                     "ADAMS 7876 RESEARCH"
+                     "FORD 7902 RESEARCH"
+                     "ALLEN 7499 SALES"
+                     "WARD 7521 SALES"])}]
+   (sort (long (re-find "\\d+" :data)))
+   show)
+
+;;10
+(q emp
+   (group :deptno
+          {:emps (conj-each :ename)})
+   [:deptno {:emps (join-str "," :emps)}]
+   show)
+
+;;11
+(q emp
+   ((contains? (map long (split-str "7654,7698,7782,7788" ",")) :empno))
+   show)
+
+;;12
+(q emp
+   [{:old-name :ename}
+    {:new-name (join-str (sort-array (split-str :ename "")))}]
+   (sort :new-name)
+   show)
+
+;;13
+(q t1
+   [{:data (explode ["CL10AR"
+                     "KI10NG"
+                     "MI10LL"
+                     "7369"
+                     "7566"
+                     "7788"
+                     "7876"
+                     "7902"
+                     "ALLEN"
+                     "WARD"
+                     "MARTIN"
+                     "BLAKE"
+                     "TURNER"
+                     "JAMES" ])}]
+   [{:mixed (replace :data "\\D" "")}]
+   ((> (count-str :mixed) 0))
+   show)
+
+;;14
+(q t1
+   [{:data (explode ["mo,larry,curly"
+                     "tina,gina,jaunita,regina,leena"])}]
+   {:sub (second (split-str :data ","))}
+   show)
+
+;;15  skipped TODO in general case when i dont know how many parts
+#_(q t1
+   [{:data "111.22.3.4"}]
+   {:data (explode (split-str :data "\\."))}
+   (group :data)
+   (pivot :data)
+   (.max :data)
+   show)
+
+;;16-17 skipped  soundex and some regex
+
+
+
+
+
+
+
+

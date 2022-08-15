@@ -102,7 +102,7 @@
         first-col (first cols)
         acc-maps (single-maps (into [] acc))]
     (if (empty? acc-maps)
-      (.distinct ^Dataset (apply (partial select df) cols))
+      (.groupBy df (into-array Column (columns cols)))
       (let [group (.groupBy df (into-array Column (columns cols)))
             acc (mapv (fn [m]
                         (let [field-name (name (first (keys m)))
@@ -119,6 +119,10 @@
                    :NULL)
             (.agg ^RelationalGroupedDataset group acc-first acc-rest))
           group)))))
+
+(defn select-distinct
+  ([df & cols] (.distinct ^Dataset (apply (partial select df) cols)))
+  ([df] (.distinct ^Dataset df)))
 
 (defn count-s [df]
   (.count df))
@@ -176,3 +180,13 @@
   "example (q (as emp 'e') [:e.deptno])"
   [df new-alias]
   (.as df (name new-alias)))
+
+
+;;---------------------------------------RelationalGroupedDataset---------------------------------
+
+(defn pivot
+  "row becomes part of the header, group(field1).pivot(field2) => new columns = distinct values of field2 column
+   its like grouping by field1 field2 and apply the accumulator there
+   used to add columns based on row values"
+  [grouped-df col]
+  (.pivot ^RelationalGroupedDataset grouped-df (column col)))

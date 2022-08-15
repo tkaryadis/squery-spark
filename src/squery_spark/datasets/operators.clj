@@ -203,6 +203,10 @@
   ([col] (cast (column col) (array-type :long)))
   ([] (cast (column []) (array-type :long))))
 
+(defn string-array
+  ([col] (cast (column col) (array-type :string)))
+  ([] (cast (column []) (array-type :string))))
+
 (defn date
   ([col] (functions/to_date (column col)))
   ([col string-format] (functions/to_date (column col) string-format)))
@@ -221,24 +225,50 @@
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
-(defn contains? [values col]
-  (.isin (column col) (into-array values)))
+(defn contains?
+  "Works in all cases
+  (q t1
+     [{:a1 [1 2 3]} {:a2 1}]
+     {:b (contains? :a1 1)
+      :c (contains? [1 2 3] :a2)
+      :d (contains? :a1 :a2)}
+     show)
+  "
+  [array-col value-col]
+  (c/cond
+    (c/vector? array-col)                                   ;;array not column/keyword
+    (.isin (column value-col) (c/into-array array-col))
+
+    (c/and  (c/not (instance? org.apache.spark.sql.Column value-col)) ;;value not column/keyword
+            (c/not (c/keyword? value-col)))
+    (functions/array_contains (column array-col) value-col)
+
+    :else                                                   ;;both columns
+    (.gt (functions/size
+               (functions/array_intersect (column array-col)
+                                          (functions/array (c/into-array Column [(column value-col)]))))
+             0)))
 
 (defn explode [col]
   (functions/explode (column col)))
 
-(defn map [f col]
-  (functions/transform (column col) f))
+(defn explode-outer
+  "like explode but explodes even if array/map empty, using null"
+  [col]
+  (functions/explode_outer (column col)))
 
-(defn map1 [f col]
+(defn map [f col]
   (functions/transform (column col) (reify Function1 (apply [_ x] (f x)))))
 
-;;aggregate(Column expr, Column initialValue, scala.Function2<Column,Column,Column> merge)
-;Applies a binary operator to an initial state and all elements in the array, and reduces this to a single state.
-;static Column	aggregate(Column expr, Column initialValue, scala.Function2<Column,Column,Column> merge, scala.Function1<Column,Column> finish)
-;Applies a binary operator to an initial state and all elements in the array, and reduces this to a single state.
+(defn map-keys [col]
+  (functions/map_keys (column col)))
 
-(defn reduce [f initial-col col-collection]
+(defn map-values [col]
+  (functions/map_values (column col)))
+
+(defn reduce
+  "col arguments, and must return col also"
+  [f initial-col col-collection]
   (functions/aggregate (column col-collection)
                        (column initial-col)
                        (reify Function2 (apply [_ x y] (f x y)))))
@@ -255,7 +285,22 @@
 (defn conj [col-array col-new-member]
   (functions/concat (into-array Column [(column col-array) (functions/array (into-array Column [col-new-member]))])))
 
+(defn sort-array
+  ([col desc?] (functions/sort_array (column col) desc?))
+  ([col] (functions/sort_array (column col))))
 
+;;sequence(Column start, Column stop)
+;Generate a sequence of integers from start to stop, incrementing by 1 if start is less than or equal to stop, otherwise -1.
+;static Column	sequence(Column start, Column stop, Column step)
+;Generate a sequence of integers from start to stop, incrementing by step.
+
+(defn range
+  ([start-col end-col] (functions/sequence (column start-col) (column end-col)))
+  ([start-col end-col step-int] (functions/sequence (column start-col) (column end-col) (c/int step-int))))
+
+
+(defn count [col-array]
+  (functions/size (column col-array)))
 
 
 ;;-----------------SET (arrays/objects and nested)--------------------------
@@ -392,6 +437,9 @@
 (defn re-find? [match-regex-string col]
   (.rlike (column col) match-regex-string))
 
+(defn re-find
+  ([match-regex-string col] (functions/regexp_extract (column col) match-regex-string (c/int 0)))
+  ([match-regex-string col grou-idx-number] (functions/regexp_extract (column col) match-regex-string (c/int grou-idx-number))))
 
 (defn concat
   "works on strings, binary and arrays"
@@ -402,6 +450,11 @@
   "concat just for strings"
   [& cols]
   (apply concat cols))
+
+;;array_join(Column column, String delimiter)
+(defn join-str
+  ([delimiter-string col] (functions/array_join (column col) delimiter-string))
+  ([col] (functions/array_join (column col) "")))
 
 (defn count-str [col]
   (functions/length (column col)))
@@ -450,6 +503,9 @@
    (.toDF df (into-array String (c/map name col-names))))
   ([df] (.toDF df)))
 
+(defn soundex [col]
+  (functions/soundex (column col)))
+
 
 ;;---------------------------------------------------------
 
@@ -484,13 +540,19 @@
     date squery-spark.datasets.operators/date
     format-number squery-spark.datasets.operators/format-number
     re-find? squery-spark.datasets.operators/re-find?
+    re-find squery-spark.datasets.operators/re-find
     contains? squery-spark.datasets.operators/contains?
     first squery-spark.datasets.operators/first
     second squery-spark.datasets.operators/second
     explode squery-spark.datasets.operators/explode
+    explode-outer squery-spark.datasets.operators/explode-outer
     map squery-spark.datasets.operators/map
-    map1 squery-spark.datasets.operators/map1
+    map-keys squery-spark.datasets.operators/map-keys
+    map-values squery-spark.datasets.operators/map-values
     conj squery-spark.datasets.operators/conj
+    sort-array squery-spark.datasets.operators/sort-array
+    range squery-spark.datasets.operators/range
+    count squery-spark.datasets.operators/count
     reduce squery-spark.datasets.operators/reduce
     get squery-spark.datasets.operators/get
     date-to-string squery-spark.datasets.operators/date-to-string
@@ -500,6 +562,7 @@
     last-day-of-month squery-spark.datasets.operators/last-day-of-month
     concat squery-spark.datasets.operators/concat
     str squery-spark.datasets.operators/str
+    join-str squery-spark.datasets.operators/join-str
     take-str squery-spark.datasets.operators/take-str
     count-str squery-spark.datasets.operators/count-str
     replace squery-spark.datasets.operators/replace
@@ -545,10 +608,11 @@
     string squery-spark.datasets.operators/string
     long squery-spark.datasets.operators/long
     long-array squery-spark.datasets.operators/long-array
-
+    string-array squery-spark.datasets.operators/string-array
     asc squery-spark.datasets.operators/asc
     desc squery-spark.datasets.operators/desc
     todf squery-spark.datasets.operators/todf
+    soundex squery-spark.datasets.operators/soundex
 
     ;;stages
     sort squery-spark.datasets.stages/sort
@@ -564,6 +628,7 @@
     intersection-with squery-spark.datasets.stages/intersection-with
     difference-with squery-spark.datasets.stages/difference-with
     difference-all-with squery-spark.datasets.stages/difference-all-with
+    pivot squery-spark.datasets.stages/pivot
 
     ;;delta
     merge- squery-spark.delta-lake.queries/merge-
