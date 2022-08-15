@@ -20,10 +20,6 @@
 (.setLogLevel (get-spark-context spark) "ERROR")
 (def data-path "/home/white/IdeaProjects/squery-spark/data-used/sql-cookbook-book/")   ;;CHANGE THIS!!!
 
-#_(def test1 (seq->df spark [["greece" "takis" 39] ["greece" "mpampis" 37] ["usa" "kostas" 20] ["japan" "petros" 40] ["japan" "takis" 45]
-                           ["japan" "takis" 45]]
-                    [:country :name [:age :long]]))
-
 (def emp (-> spark .read (.format "delta") (.load (str data-path "/emp"))))
 (def dept (-> spark .read (.format "delta") (.load (str data-path "/dept"))))
 (def bonus (-> spark .read (.format "delta") (.load (str data-path "/bonus"))))
