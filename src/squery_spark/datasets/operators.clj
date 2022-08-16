@@ -470,6 +470,9 @@
   ([col pattern-string] (functions/split (column col) pattern-string))
   ([col pattern-string limit-int] (functions/split (column col) pattern-string limit-int)))
 
+(defn substring? [str col]
+  (.contains ^Column (column col) str))
+
 ;;--------------------------Dates-------------------------------------------
 
 (defn date-to-string [col date-format]
@@ -567,6 +570,7 @@
     count-str squery-spark.datasets.operators/count-str
     replace squery-spark.datasets.operators/replace
     split-str squery-spark.datasets.operators/split-str
+    substring? squery-spark.datasets.operators/substring?
 
     ;;accumulators
     sum squery-spark.datasets.operators/sum
