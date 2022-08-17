@@ -16,7 +16,7 @@
             [squery-spark.datasets.schema :refer [schema-types]]
             [squery-spark.utils.utils :refer [nested2 nested3]]
             [squery-spark.datasets.schema :refer [array-type]])
-  (:import [org.apache.spark.sql functions Column]
+  (:import [org.apache.spark.sql functions Column Dataset]
            (org.apache.spark.sql.expressions Window WindowSpec)
            (scala Function1 Function2)))
 
@@ -66,8 +66,14 @@
   (functions/floor (column col)))
 
 (defn round
+  "rounds up 0.5=1.0"
   ([col] (functions/round (column col)))
   ([col scale] (functions/round (column col) scale)))
+
+(defn bround
+  "rounds down 0.5 =0"
+  [col]
+  (functions/bround (column col)))
 
 (defn trunc  [date-col string-format]
   (functions/trunc (column date-col) string-format))
@@ -88,6 +94,9 @@
 
 (defn = [col1 col2]
   (.equalTo (column col1) (column col2)))
+
+(defn =safe [col1 col2]
+  (.eqNullSafe (column col1) (column col2)))
 
 (defn not= [col1 col2]
   (.notEqual (column col1) (column col2)))
@@ -175,8 +184,10 @@
 (defn if-nil? [col nil-value-col]
   (if- (nil? col) (column nil-value-col) (column col)))
 
-(defn first-not-nil [& cols]
-  (functions/coalesce (into-array ^Column (columns cols))))
+(defn coalesce
+  "returns the first not nil value"
+  [& cols]
+  (functions/coalesce (into-array Column (columns cols))))
 
 (defn some? [col]
   (.isNotNull (column col)))
@@ -210,6 +221,10 @@
 (defn date
   ([col] (functions/to_date (column col)))
   ([col string-format] (functions/to_date (column col) string-format)))
+
+(defn timestamp
+  ([col] (functions/to_timestamp (column col)))
+  ([col string-format] (functions/to_timestamp (column col) string-format)))
 
 (defn col [c]
   (functions/col (if (keyword? c) (name c) c)))
@@ -463,8 +478,11 @@
   ([start-int len-int col] (functions/substring (column col) start-int len-int))
   ([start-int col] (functions/substring (column col) start-int Integer/MAX_VALUE)))
 
-(defn replace [col match-col replacement-col]
-  (functions/regexp_replace (column col) (column match-col) (column replacement-col)))
+
+(defn replace [col match-col-or-string replacement-col-or-string]
+  (if (c/and (c/string? match-col-or-string) (c/string? replacement-col-or-string))
+    (functions/regexp_replace (column col) match-col-or-string replacement-col-or-string)
+    (functions/regexp_replace (column col) (column match-col-or-string) (column replacement-col-or-string))))
 
 (defn split-str
   ([col pattern-string] (functions/split (column col) pattern-string))
@@ -472,6 +490,46 @@
 
 (defn substring? [str col]
   (.contains ^Column (column col) str))
+
+(defn capitalize [col]
+  (functions/initcap (column col)))
+
+(defn lower-case [col]
+  (functions/lower (column col)))
+
+(defn upper-case [col]
+  (functions/upper (column col)))
+
+(defn trim
+  ([col trim-string] (functions/trim (column col) trim-string))
+  ([col] (functions/trim (column col))))
+
+(defn triml
+  ([col trim-string] (functions/ltrim (column col) trim-string))
+  ([col] (functions/ltrim (column col))))
+
+(defn trimr
+  ([col trim-string] (functions/rtrim (column col) trim-string))
+  ([col] (functions/rtrim (column col))))
+
+(defn padl
+  "Result will be a string of lenght=len-int,
+   if the column is smaller pad-string will be added
+   on the left"
+  [col len-int pad-string]
+  (functions/lpad (column col) (c/int len-int) pad-string))
+
+(defn padr [col len-int pad-string]
+  (functions/rpad (column col) (c/int len-int) pad-string))
+
+
+(defn translate
+  "replaces characters(no need for full match), based on index,
+   index 2 of string-match with index 2 of string-replacement"
+  [col string-match string-replacement]
+  (functions/translate (column col) string-match string-replacement))
+
+
 
 ;;--------------------------Dates-------------------------------------------
 
@@ -492,6 +550,45 @@
 
 (defn days-diff [col-end col-start]
   (functions/datediff (column col-end)  (column col-start)))
+
+(defn current-date []
+  (functions/current_date))
+
+(defn current-timestamp []
+  (functions/current_timestamp))
+
+(defn add-days [col-start column-or-number]
+  (if (c/number? column-or-number)
+    (functions/date_add (column col-start) (c/int column-or-number))
+    (functions/date_add (column col-start) (column column-or-number))))
+
+(defn sub-days [col-start column-or-number]
+  (if (c/number? column-or-number)
+    (functions/date_sub (column col-start) (c/int column-or-number))
+    (functions/date_sub (column col-start) (column column-or-number))))
+
+#_(defn add-months [col-start column-or-number]
+  (if (c/number? column-or-number)
+    (functions/add_months (column col-start) (c/int column-or-number))
+    (functions/add_months (column col-start) (column column-or-number))))
+
+#_(defn sub-months [col-start column-or-number]
+  (if (c/number? column-or-number)
+    (functions/sub_months (column col-start) (c/int column-or-number))
+    (functions/sub_months (column col-start) (column column-or-number))))
+
+(defn months-between [start-col end-col]
+  (functions/months_between (column start-col) (column end-col)))
+
+
+
+
+;;-----------------------------Statistics-----------------------------------
+
+(defn corr
+  ([df-functions col1 col2] (.corr df-functions (.toString (column col1)) (.toString (column col2))))
+  ([col1 col2] (functions/corr (column col1) (column col2))))
+
 
 
 ;;--------------------------------------------------------------------------
@@ -523,6 +620,7 @@
     dec squery-spark.datasets.operators/dec
     * squery-spark.datasets.operators/*
     = squery-spark.datasets.operators/=
+    =safe squery-spark.datasets.operators/=safe
     not= squery-spark.datasets.operators/not=
     > squery-spark.datasets.operators/>
     >= squery-spark.datasets.operators/>=
@@ -538,9 +636,10 @@
     false? squery-spark.datasets.operators/false?
     nil? squery-spark.datasets.operators/nil?
     if-nil? squery-spark.datasets.operators/if-nil?
-    first-not-nil squery-spark.datasets.operators/first-not-nil
+    coalesce squery-spark.datasets.operators/coalesce
     some? squery-spark.datasets.operators/some?
     date squery-spark.datasets.operators/date
+    timestamp squery-spark.datasets.operators/timestamp
     format-number squery-spark.datasets.operators/format-number
     re-find? squery-spark.datasets.operators/re-find?
     re-find squery-spark.datasets.operators/re-find
@@ -563,6 +662,14 @@
     month squery-spark.datasets.operators/month
     day-of-month squery-spark.datasets.operators/day-of-month
     last-day-of-month squery-spark.datasets.operators/last-day-of-month
+    days-diff squery-spark.datasets.operators/days-diff
+    current-date squery-spark.datasets.operators/current-date
+    current-timestamp squery-spark.datasets.operators/current-timestamp
+    add-days squery-spark.datasets.operators/add-days
+    sub-days squery-spark.datasets.operators/sub-days
+    ;;add-months squery-spark.datasets.operators/add-months
+    ;;sub-months squery-spark.datasets.operators/sub-months
+    months-between squery-spark.datasets.operators/months-between
     concat squery-spark.datasets.operators/concat
     str squery-spark.datasets.operators/str
     join-str squery-spark.datasets.operators/join-str
@@ -571,6 +678,15 @@
     replace squery-spark.datasets.operators/replace
     split-str squery-spark.datasets.operators/split-str
     substring? squery-spark.datasets.operators/substring?
+    capitalize squery-spark.datasets.operators/capitalize
+    lower-case squery-spark.datasets.operators/lower-case
+    upper-case squery-spark.datasets.operators/upper-case
+    trim squery-spark.datasets.operators/trim
+    triml squery-spark.datasets.operators/triml
+    trimr squery-spark.datasets.operators/trimr
+    padl squery-spark.datasets.operators/padl
+    padr squery-spark.datasets.operators/padr
+    translate squery-spark.datasets.operators/translate
 
     ;;accumulators
     sum squery-spark.datasets.operators/sum
@@ -603,6 +719,7 @@
     ceil squery-spark.datasets.operators/ceil
     floor squery-spark.datasets.operators/floor
     round squery-spark.datasets.operators/round
+    bround squery-spark.datasets.operators/bround
     trunc squery-spark.datasets.operators/trunc
     sqrt squery-spark.datasets.operators/sqrt
     mod squery-spark.datasets.operators/mod
@@ -617,6 +734,9 @@
     desc squery-spark.datasets.operators/desc
     todf squery-spark.datasets.operators/todf
     soundex squery-spark.datasets.operators/soundex
+
+    ;;statistics
+    corr squery-spark.datasets.operators/corr
 
     ;;stages
     sort squery-spark.datasets.stages/sort
@@ -633,6 +753,14 @@
     difference-with squery-spark.datasets.stages/difference-with
     difference-all-with squery-spark.datasets.stages/difference-all-with
     pivot squery-spark.datasets.stages/pivot
+    describe squery-spark.datasets.stages/describe
+    stat squery-spark.datasets.stages/stat
+    approx-quantile squery-spark.datasets.stages/approx-quantile
+    stat  squery-spark.datasets.stages/stat
+    na    squery-spark.datasets.stages/na
+    drop-na squery-spark.datasets.stages/drop-na
+    fill-na squery-spark.datasets.stages/fill-na
+    replace-na squery-spark.datasets.stages/replace-na
 
     ;;delta
     merge- squery-spark.delta-lake.queries/merge-

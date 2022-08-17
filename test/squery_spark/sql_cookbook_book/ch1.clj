@@ -85,7 +85,7 @@
 
 ;;12 (alt)
 (q emp
-   [{:comm (first-not-nil :comm 0)}]
+   [{:comm (coalesce :comm 0)}]
    .show)
 
 ;;13

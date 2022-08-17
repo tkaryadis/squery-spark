@@ -34,7 +34,7 @@
                                                      stage)))))
 
           (vector? stage)                                   ; [:a ....]
-          (let [stage `(squery-spark.datasets.stages/select ~@stage)]
+          (let [stage `(squery-spark.datasets.stages/select ~stage)]
             (if (vector? stage)                             ; 1 project stage might produce nested stages,put the nested and recur
               (recur (concat stage (rest csql-pipeline)) filters sql-pipeline) ; do what is done for nested stages(see below)
               (if (empty? filters)

@@ -14,7 +14,8 @@
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql functions Column RelationalGroupedDataset)
            (org.apache.spark.sql.expressions Window WindowSpec)
-           (org.apache.spark.sql.types DataTypes ArrayType)))
+           (org.apache.spark.sql.types DataTypes ArrayType)
+           (java.util Arrays)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -66,10 +67,296 @@
 ;  .where("isExpensive")
 ;  .select("unitPrice", "isExpensive").show(5)
 
+
 (q df
    {:isExpensive (and (= :StockCode "DOT")
-                      (or (> :UnitPrice 600) (substring? "POSTAGE" :description)))}
+                      (or (> :UnitPrice 600)
+                          (substring? "POSTAGE" :description)))}
    ((true? :isExpensive))
    [:UnitPrice :isExpensive]
    (show 5))
 
+
+;;df.withColumn("isExpensive", not(col("UnitPrice").leq(250)))
+;  .filter("isExpensive")
+;  .select("Description", "UnitPrice").show(5)
+
+(q df
+   {:isExpensive (not (<= :UnitPrice 250))}
+   ((true? :isExpensive))
+   [:Description :UnitPrice]
+   (show 5))
+
+;;df.where(col("Description").eqNullSafe("hello")).show()
+(q df
+   ((=safe :Description "hello"))
+   show)
+
+;;val fabricatedQuantity = pow(col("Quantity") * col("UnitPrice"), 2) + 5
+;df.select(expr("CustomerId"), fabricatedQuantity.alias("realQuantity")).show(2)
+
+(q df
+   [:CustomerId {:realQuantity (+ (pow (* :Quantity :UnitPrice) 2) 5)}]
+   (show 2))
+
+;;df.select(round(col("UnitPrice"), 1).alias("rounded"), col("UnitPrice")).show(5)
+
+(q df
+   [{:rounded (round :UnitPrice 1)} :UnitPrice]
+   (show 5))
+
+
+;;df.select(round(lit("2.5")), bround(lit("2.5"))).show(2)
+
+(q df
+   [(round "2.5") (bround "2.5")]
+   (show 2))
+
+;df.stat.corr("Quantity", "UnitPrice")
+
+(q df
+   .stat
+   (corr :Quantity :UnitPrice)
+   prn)
+
+;;;df.select(corr("Quantity", "UnitPrice")).show()
+(q df
+   [(corr :Quantity :UnitPrice)]
+   show)
+
+;;df.describe().show()
+
+(q df
+   describe
+   show)
+
+;;val colName = "UnitPrice"
+;val quantileProbs = Array(0.5)
+;val relError = 0.05
+;df.stat.approxQuantile("UnitPrice", quantileProbs, relError) // 2.51
+
+(q df
+   stat
+   (approx-quantile (c/double-array [0.5]) 0.05 :UnitPrice)
+   Arrays/toString
+   println)
+
+;;skipped
+;df.stat.crosstab("StockCode", "Quantity").show()
+;df.stat.freqItems(Seq("StockCode", "Quantity")).show()
+;df.select(monotonically_increasing_id()).show(2)
+
+;;df.select(initcap(col("Description"))).show(2, false)
+
+(q df
+   [(capitalize :Description)]
+   (show 2 false))
+
+;;df.select(col("Description"),
+;  lower(col("Description")),
+;  upper(lower(col("Description")))).show(2)
+
+(q df
+   [:Description (upper-case :Description) (lower-case :Description)]
+   (show 2))
+
+;df.select(
+;    ltrim(lit("    HELLO    ")).as("ltrim"),
+;    rtrim(lit("    HELLO    ")).as("rtrim"),
+;    trim(lit("    HELLO    ")).as("trim"),
+;    lpad(lit("HELLO"), 3, " ").as("lp"),
+;    rpad(lit("HELLO"), 10, " ").as("rp")).show(2)
+
+(q df
+   (limit 1)
+   [{:triml (triml "    HELLO    ")}
+    {:trimr (trimr "    HELLO    ")}
+    {:trim (trim "    HELLO    ")}
+    {:padl (padl "HELLO" 8 "#")}
+    {:padr (padr "HELLO" 10 "#")}
+    ]
+   (show 2))
+
+;;val simpleColors = Seq("black", "white", "red", "green", "blue")
+;val regexString = simpleColors.map(_.toUpperCase).mkString("|")
+;// the | signifies `OR` in regular expression syntax
+;df.select(
+;  regexp_replace(col("Description"), regexString, "COLOR").alias("color_clean"),
+;  col("Description")).show(2)
+
+(def simple-colors ["black", "white", "red", "green", "blue"])
+
+(let [regex-string (clojure.string/join "|" (map clojure.string/upper-case simple-colors))]
+  (q df
+     [:Description {:color-clean (replace :Description regex-string "COLOR")}]
+     (show false)))
+
+;;alt (use of clojure.core c, inside the q scope)
+(q df
+   [:Description
+    {:color-clean (replace :Description
+                           (clojure.string/join "|" (c/map clojure.string/upper-case simple-colors))
+                           "COLOR")}]
+   (show false))
+
+
+;df.select(translate(col("Description"), "LEET", "1337"), col("Description"))
+;  .show(2)
+
+(q df
+   [(translate :Description "LEET" "1337") :Description]
+   (show 2))
+
+;val regexString = simpleColors.map(_.toUpperCase).mkString("(", "|", ")")
+;// the | signifies OR in regular expression syntax
+;df.select(
+;     regexp_extract(col("Description"), regexString, 1).alias("color_clean"),
+;     col("Description")).show(2)
+
+(let [regex-string (str "(" (clojure.string/join "|" (map clojure.string/upper-case simple-colors)) ")")]
+  (q df
+     [{:color-clean (re-find regex-string :Description 1)} :Description]
+     (show 2)))
+
+
+;val containsBlack = col("Description").contains("BLACK")
+;val containsWhite = col("DESCRIPTION").contains("WHITE")
+;df.withColumn("hasSimpleColor", containsBlack.or(containsWhite))
+;  .where("hasSimpleColor")
+;  .select("Description").show(3, false)
+
+(q df
+   {:hasSimpleColor (or (substring? "BLACK" :Description)
+                        (substring? "White" :Description))}
+   ((true? :hasSimpleColor))
+   [:Description]
+   (show 3 false))
+
+;val simpleColors = Seq("black", "white", "red", "green", "blue")
+;val selectedColumns = simpleColors.map(color => {
+;   col("Description").contains(color.toUpperCase).alias(s"is_$color")
+;}):+expr("*") // could also append this value
+;df.select(selectedColumns:_*).where(col("is_white").or(col("is_red")))
+;  .select("Description").show(3, false)
+
+(let [color-map (reduce (fn [color-map color]
+                          (merge color-map
+                                 (sq {(c/keyword (c/str "is-" color))
+                                      (substring? (clojure.string/upper-case color) :Description)})))
+                        {}
+                        simple-colors)]
+  (q df
+     (add-columns color-map)
+     ((or :is-white :is-red))
+     [:Description]
+     (show 3 false)))
+
+;;df.printSchema()
+
+(.printSchema df)
+
+;;-------------------------------------------Dates---------------------------------------------------------------
+
+;;val dateDF = spark.range(10)
+;  .withColumn("today", current_date())
+;  .withColumn("now", current_timestamp())
+;dateDF.createOrReplaceTempView("dateTable")
+
+(def date-df
+  (q spark
+     (.range 10)
+     {:today (current-date)
+      :now (current-timestamp)}))
+
+(.printSchema date-df)
+(show date-df)
+
+;;dateDF.select(date_sub(col("today"), 5), date_add(col("today"), 5)).show(1)
+
+(q date-df
+   [(sub-days :today 5) :today (add-days :today 5)]
+   (show 1))
+
+
+;;dateDF.withColumn("week_ago", date_sub(col("today"), 7))
+;  .select(datediff(col("week_ago"), col("today"))).show(1)
+
+(q date-df
+   {:week-ago (sub-days :today 7)}
+   [(days-diff :week-ago :today)]
+   (show 1))
+
+;;dateDF.select(
+;;    to_date(lit("2016-01-01")).alias("start"),
+;;    to_date(lit("2017-05-22")).alias("end"))
+;;  .select(months_between(col("start"), col("end"))).show(1)
+
+(q date-df
+   [{:start (date "2016-01-01")} {:end (date "2017-05-22")}]
+   [(months-between :start :end)]
+   (show 1))
+
+;;spark.range(5).withColumn("date", lit("2017-01-01"))
+;  .select(to_date(col("date"))).show(1)
+
+(q spark
+   (.range 5)
+   {:date "2017-01-01"}
+   [(date :date)]
+   (show 1))
+
+
+;dateDF.select(to_date(lit("2016-20-12")),to_date(lit("2017-12-11"))).show(1)
+
+(q date-df
+   [(date "2016-20-12") (date "2017-12-11")]
+   (show 1))
+
+;val dateFormat = "yyyy-dd-MM"
+;val cleanDateDF = spark.range(1).select(
+;    to_date(lit("2017-12-11"), dateFormat).alias("date"),
+;    to_date(lit("2017-20-12"), dateFormat).alias("date2"))
+;cleanDateDF.createOrReplaceTempView("dateTable2")
+
+(def clean-date-df
+  (q spark (.range 1)
+     [{:date (date "2017-12-11" "yyyy-dd-MM")}
+      {:date2 (date "2017-20-12" "yyyy-dd-MM")}]))
+
+(show clean-date-df)
+
+;;cleanDateDF.select(to_timestamp(col("date"), dateFormat)).show()
+;cleanDateDF.filter(col("date2") > lit("2017-12-12")).show()
+
+(q clean-date-df [(timestamp :date "yyyy-dd-MM")] show)
+(q clean-date-df ((> :date2 "2017-12-12")) show)
+
+;;df.select(coalesce(col("Description"), col("CustomerId"))).show()
+
+(q df
+   [(coalesce :Description :CustomerId)]
+   show)
+
+;df.na.drop()
+;df.na.drop("any")
+;df.na.drop("all")
+;df.na.drop("all", Seq("StockCode", "InvoiceNo"))
+
+(q df (drop-na))
+(q df (drop-na "any"))                                   ;;drop row if any column null/nan
+(q df (drop-na "all"))                                   ;;drop row if all colums are null/nan
+(q df (drop-na "all" [:StockCode :InvoiceNo]))             ;;drop row if condition for this 2 columns
+
+;df.na.fill("All Null values become this string")
+;df.na.fill(5, Seq("StockCode", "InvoiceNo"))
+;val fillColValues = Map("StockCode" -> 5, "Description" -> "No Value")
+;df.na.fill(fillColValues)
+
+(q df (fill-na "All Null values become this string"))
+(q df (fill-na 5 [:StockCode :InvoiceNo]))
+(q df (fill-na {:StockCode 5 :Description "No Value"}))
+
+;;;;df.na.replace("Description", Map("" -> "UNKNOWN"))
+(q df (replace-na :Description {"" "UNKNOWN"}))
+
+;;done until complex types

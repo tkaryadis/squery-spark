@@ -4,7 +4,7 @@
             [squery-spark.datasets.internal.common :refer [columns column-keyword column single-maps]]
             [squery-spark.utils.utils :refer [string-map]])
   (:import (org.apache.spark.sql Dataset Column)
-           [org.apache.spark.sql functions RelationalGroupedDataset]
+           [org.apache.spark.sql functions RelationalGroupedDataset DataFrameStatFunctions DataFrameNaFunctions]
            (java.util HashMap)
            (org.apache.spark.sql.expressions Window WindowSpec)))
 
@@ -22,9 +22,8 @@
 (defn select
   "[:CustomerID (lit 5) {:price (coll \"UnitPrice\")}]
    (.select ^Dataset (into-array [(col \"CustomerID\")  (lit 5) (.as (col \"UnitPrice\") \"price\")]))"
-  [df & fields]
+  [df fields]
   (.select ^Dataset df (into-array Column (columns fields))))
-
 
 ;;TODO df.withColumnRenamed("DEST_COUNTRY_NAME", "dest").columns,maybe {!field1 : field2}
 (defn add-columns [df m]
@@ -181,6 +180,13 @@
   [df new-alias]
   (.as df (name new-alias)))
 
+;;---------------------------------------statistics----------------------------------------------
+
+(defn describe [df & cols]
+  (.describe df (into-array String (map #(.toString %) (columns cols)))))
+
+(defn stat [df]
+  (.stat ^Dataset df))
 
 ;;---------------------------------------RelationalGroupedDataset---------------------------------
 
@@ -190,3 +196,43 @@
    used to add columns based on row values"
   [grouped-df col]
   (.pivot ^RelationalGroupedDataset grouped-df (column col)))
+
+
+;;-------------------------------------DataFrameStatFunctions(after call stat)--------------------------------
+
+(defn stat [df]
+  (.stat ^Dataset df))
+
+;approxQuantile(String[] cols, double[] probabilities, double relativeError)
+
+(defn approx-quantile [df-stat-functions probabilities-double-array relative-error-double & cols]
+  (if (c/= (c/count cols) 1)
+    (.approxQuantile ^DataFrameStatFunctions df-stat-functions (.toString (column (c/first cols)))
+                     probabilities-double-array relative-error-double)
+    (.approxQuantile ^DataFrameStatFunctions df-stat-functions (into-array String (c/map #(.toString %) (columns cols)))
+                     probabilities-double-array relative-error-double)))
+
+
+;;-----------------------------DataFrameNaFunctions(after call na)(nil,NaN etc)--------------
+
+(defn na [df]
+  (.na ^Dataset df))
+
+(defn drop-na
+  ([df] (.drop (.na ^Dataset df)))
+  ([df string-how] (.drop  (.na df) string-how))
+  ([df string-how cols] (.drop (.na df) string-how (into-array String (mapv #(.toString %) (columns cols))))))
+
+(defn fill-na
+  ([df value-or-map]   ;;value can be a map also to specify the columns
+   (let [value-or-map (if (map? value-or-map) (HashMap. (string-map value-or-map)) value-or-map)]
+     (-> df .na (.fill value-or-map))))
+  ([df value cols]
+   (-> df .na (.fill value (into-array String (mapv #(.toString %) (columns cols)))))))
+
+;;replace(String col, java.util.Map<T,T> replacement)
+;Replaces values matching keys in replacement map with the corresponding values.
+
+
+(defn replace-na [df col map-replacements]
+  (.replace (.na df) (.toString (column col)) (HashMap. (string-map map-replacements))))
