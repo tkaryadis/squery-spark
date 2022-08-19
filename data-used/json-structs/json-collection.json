@@ -1,0 +1,44 @@
+[
+  {
+    "name": "takis",
+    "location": {
+      "country": "greece",
+      "city": "athens"
+    },
+    "pets": [
+      "broffy",
+      "odet"
+    ],
+    "pets-details": [
+      {
+        "name": "brooffy",
+        "nickname": "louloudenio-terataki"
+      },
+      {
+        "name": "odet",
+        "nickname": "skili tou satana"
+      }
+    ]
+  },
+  {
+    "name": "louna",
+    "location": {
+      "country": "finland",
+      "city": "athens"
+    },
+    "pets": [
+      "isla",
+      "elsi"
+    ],
+    "pets-details": [
+      {
+        "name": "isla",
+        "nickname": "monkey"
+      },
+      {
+        "name": "elsi",
+        "nickname": ""
+      }
+    ]
+  }
+]

@@ -5,7 +5,7 @@
                             if-not cond
                             into type cast boolean double int long string?  nil? some? true? false?
                             string? int? decimal? double? boolean? number? rand
-                             get get-in assoc assoc-in dissoc
+                            get get-in assoc assoc-in dissoc
                             concat conj contains? range reverse count take subvec empty?
                             fn map filter reduce
                             first second last merge max min
@@ -235,6 +235,15 @@
 (defn array [& cols]
   (functions/array (into-array Column (columns cols))))
 
+;;---------------------Structs----------------------------------------------
+
+(defn get [col index-key]
+  (c/reduce (c/fn [v t]
+              (if (c/number? t)
+                (functions/element_at v (c/int (c/inc t)))
+                (.getField v (name t))))
+            (column col)
+            (if (c/vector? index-key) index-key [index-key])))
 
 ;;---------------------------Arrays-----------------------------------------
 ;;--------------------------------------------------------------------------
@@ -288,8 +297,10 @@
                        (column initial-col)
                        (reify Function2 (apply [_ x y] (f x y)))))
 
-(defn get [col-colletion index-number]
-  (functions/element_at (column col-colletion) (c/int (c/inc index-number))))
+(defn get-key [col object-value]
+  (if (c/number? object-value)
+    (functions/element_at (column col) (c/int (c/inc object-value)))
+    (functions/element_at (column col) object-value)))
 
 (defn first [col-collection]
   (get col-collection 0))
@@ -657,6 +668,7 @@
     count squery-spark.datasets.operators/count
     reduce squery-spark.datasets.operators/reduce
     get squery-spark.datasets.operators/get
+    get-key squery-spark.datasets.operators/get-key
     date-to-string squery-spark.datasets.operators/date-to-string
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month

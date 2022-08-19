@@ -13,11 +13,7 @@
 
                  [org.flatland/ordered "1.5.9"]
 
-                 ;[com.datastax.spark/spark-cassandra-connector_2.11 "2.4.0"]
-                 ;[com.datastax.spark/spark-cassandra-connector-embedded_2.11 "2.4.0"]
-                 ;[org.postgresql/postgresql "42.2.5"]
                  ]
-
   :aot [
         ;squery-spark.udftest
         ]
