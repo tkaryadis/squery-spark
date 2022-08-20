@@ -15,7 +15,10 @@
             [squery-spark.datasets.internal.common :refer [column column columns]]
             [squery-spark.datasets.schema :refer [schema-types]]
             [squery-spark.utils.utils :refer [nested2 nested3]]
-            [squery-spark.datasets.schema :refer [array-type]])
+            [squery-spark.datasets.schema :refer [array-type]]
+            [squery-spark.datasets.internal.common :refer [column]]
+            [squery-spark.utils.interop :refer [clj->scala1]]
+            [erp12.fijit.collection :refer [to-scala-seq to-scala-list]])
   (:import [org.apache.spark.sql functions Column Dataset]
            (org.apache.spark.sql.expressions Window WindowSpec)
            (scala Function1 Function2)))
@@ -229,6 +232,10 @@
 (defn col [c]
   (functions/col (if (keyword? c) (name c) c)))
 
+(defn ->col [c]
+  (squery-spark.datasets.internal.common/column c))
+
+
 (defn format-number [col d]
   (functions/format_number (column col) d))
 
@@ -244,6 +251,17 @@
                 (.getField v (name t))))
             (column col)
             (if (c/vector? index-key) index-key [index-key])))
+
+
+(defn assoc [col & pairs]
+  (c/reduce (c/fn [v t]
+              (prn (c/first t))
+              (.withField v (c/first t) (column (c/second t))))
+            (column col)
+            (c/partition 2 pairs)))
+
+(defn dissoc [col & fields]
+  (.dropFields ^Column (column col) (clj->scala1 fields)))
 
 ;;---------------------------Arrays-----------------------------------------
 ;;--------------------------------------------------------------------------
@@ -281,6 +299,7 @@
   [col]
   (functions/explode_outer (column col)))
 
+;;TODO if possible make the result of f to be always columns, to allow return f clojure data also
 (defn map [f col]
   (functions/transform (column col) (reify Function1 (apply [_ x] (f x)))))
 
@@ -290,17 +309,31 @@
 (defn map-values [col]
   (functions/map_values (column col)))
 
-(defn reduce
+#_(defn reduce
   "col arguments, and must return col also"
   [f initial-col col-collection]
   (functions/aggregate (column col-collection)
                        (column initial-col)
                        (reify Function2 (apply [_ x y] (f x y)))))
 
-(defn get-key [col object-value]
-  (if (c/number? object-value)
-    (functions/element_at (column col) (c/int (c/inc object-value)))
-    (functions/element_at (column col) object-value)))
+(defn col-f [f x y]
+  (let [result (f x y)]
+    (column result)))
+
+(defn reduce
+  "col arguments, and must return col also"
+  [f initial-col col-collection]
+  (functions/aggregate (column col-collection)
+                       (column initial-col)
+                       (reify Function2 (apply [_ x y] (col-f f x y)))))
+
+(defn mget [col index-key]
+  (c/reduce (c/fn [v t]
+              (if (c/number? t)
+                (functions/element_at v (c/int (c/inc t)))
+                (functions/element_at v t)))
+            (column col)
+            (if (c/vector? index-key) index-key [index-key])))
 
 (defn first [col-collection]
   (get col-collection 0))
@@ -651,6 +684,8 @@
     some? squery-spark.datasets.operators/some?
     date squery-spark.datasets.operators/date
     timestamp squery-spark.datasets.operators/timestamp
+    col squery-spark.datasets.operators/col
+    ->col squery-spark.datasets.operators/->col
     format-number squery-spark.datasets.operators/format-number
     re-find? squery-spark.datasets.operators/re-find?
     re-find squery-spark.datasets.operators/re-find
@@ -668,7 +703,9 @@
     count squery-spark.datasets.operators/count
     reduce squery-spark.datasets.operators/reduce
     get squery-spark.datasets.operators/get
-    get-key squery-spark.datasets.operators/get-key
+    assoc squery-spark.datasets.operators/assoc
+    dissoc squery-spark.datasets.operators/dissoc
+    mget squery-spark.datasets.operators/mget
     date-to-string squery-spark.datasets.operators/date-to-string
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
@@ -753,6 +790,7 @@
     ;;stages
     sort squery-spark.datasets.stages/sort
     group squery-spark.datasets.stages/group
+    agg squery-spark.datasets.stages/agg
     unset squery-spark.datasets.stages/unset
     count-s squery-spark.datasets.stages/count-s
     limit squery-spark.datasets.stages/limit

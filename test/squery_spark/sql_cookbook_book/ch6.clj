@@ -14,7 +14,7 @@
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql functions Column RelationalGroupedDataset)
            (org.apache.spark.sql.expressions Window WindowSpec)
-           (org.apache.spark.sql.types DataTypes ArrayType)))
+           (org.apache.spark.sql.types DataTypes ArrayType StructType)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -163,11 +163,40 @@
 ;;15  skipped TODO in general case when i dont know how many parts
 #_(q t1
    [{:data "111.22.3.4"}]
-   {:data (explode (split-str :data "\\."))}
+   {:data (mget (reduce (fn [v m]
+                          {"index" [(inc (mget v ["index" 0]))]
+                           "data"  (conj (mget v "data")
+                                         (str (mget v ["index" 0]) "-" m))})
+                        {"index" [1] "data" (string-array [])}
+                        (split-str :data "\\."))
+                "data")}
+   {:data (explode :data)}
+   {:part (get (split-str :data "-") 0)
+    :data (get (split-str :data "-") 1)}
    (group :data)
-   (pivot :data)
-   (.max :data)
-   show)
+   (pivot :part)
+   (agg {:x (first-a :data)})
+   (show false))
+
+;;15
+
+(q t1
+   [{:data "111.22.3.4"}]
+   {:p {"a" 1 "b" 2 }}
+   {:z (dissoc :p "a")}
+   ;(unset :data)
+
+   #_{:p (functions/struct (into-array Column []))}
+   #_{:parts (reduce (fn [v t]
+                       (assoc v (c/rand-int 100) t))
+                     {}
+                     (split-str :data "\\."))}
+   ;show
+   .printSchema)
+
+
+
+
 
 ;;16-17 skipped  soundex and some regex
 

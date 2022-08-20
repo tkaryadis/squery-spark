@@ -1,5 +1,5 @@
 (ns squery-spark.datasets.internal.common
-  (:require [squery-spark.utils.utils :refer [keyword-map]]
+  (:require [squery-spark.utils.utils :refer [keyword-map string-map]]
             clojure.set)
   (:import [org.apache.spark.sql functions Column]))
 
@@ -9,6 +9,7 @@
 ;;the first replaces only keywords
 ;;the second replaces keywords and numbers,strings to (lit  )
 
+;;TODO make it faster protocol
 (defn column
   " converts always to column
     if keyword => column, else lit, but always column result
@@ -30,8 +31,9 @@
     (keyword? field)
     (functions/col (name field))
 
-    (map? field)
-    (let [meta (get field :meta)
+    (and (map? field) (contains? field :____select____))
+    (let [field (dissoc field :____select____)
+          meta (get field :meta)
           field (dissoc field :meta)
           k (name (first (keys field)))
           v (first (vals field))
@@ -39,6 +41,18 @@
       (if meta
         (.as v k meta)
         (.as v k)))
+
+    ;;map in clojure means struct not MapType
+    (map? field)
+    (if (empty? field)
+      (functions/struct (into-array Column []))
+      (functions/struct (into-array Column (map column (reduce (fn [v t]
+                                                                 (conj v (.alias ^Column (column (get t 1)) (get t 0)) ))
+                                                               []
+                                                               (into [] (string-map field)))))))
+    #_(functions/map (into-array Column (map column (reduce (fn [v t]
+                                                            (conj v (get t 0) (get t 1)))
+                                                          (into [] (string-map field))))))
 
     (not (instance? org.apache.spark.sql.Column field))
     (functions/lit field)
@@ -59,8 +73,9 @@
     (keyword? field)
     (functions/col (name field))
 
-    (map? field)
-    (let [meta (get field :meta)
+    (and (map? field) (contains? field :____select____))
+    (let [field (dissoc field :____select____)
+          meta (get field :meta)
           field (dissoc field :meta)
           k (name (first (keys field)))
           v (first (vals field))
@@ -68,6 +83,17 @@
       (if meta
         (.as v k meta)
         (.as v k)))
+
+    (map? field)
+    (if (empty? field)
+      (functions/struct (into-array Column []))
+      (functions/struct (into-array Column (map column (reduce (fn [v t]
+                                                                 (conj v (.alias ^Column (column (get t 1)) (get t 0)) ))
+                                                               []
+                                                               (into [] (string-map field)))))))
+    #_(functions/map (into-array Column (map column (reduce (fn [v t]
+                                                            (conj v (get t 0) (get t 1)))
+                                                          (into [] (string-map field))))))
 
     :else
     field))

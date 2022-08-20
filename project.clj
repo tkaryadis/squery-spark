@@ -11,6 +11,8 @@
                  [org.apache.spark/spark-mllib_2.13 "3.2.0"]
                  [io.delta/delta-core_2.13 "2.0.0"]
 
+                 [io.github.erp12/fijit "1.0.8"]
+
                  [org.flatland/ordered "1.5.9"]
 
                  ]

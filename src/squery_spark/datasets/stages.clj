@@ -23,7 +23,11 @@
   "[:CustomerID (lit 5) {:price (coll \"UnitPrice\")}]
    (.select ^Dataset (into-array [(col \"CustomerID\")  (lit 5) (.as (col \"UnitPrice\") \"price\")]))"
   [df fields]
-  (.select ^Dataset df (into-array Column (columns fields))))
+  (.select ^Dataset df (into-array Column (columns (map (fn [f]
+                                                          (if (map? f)
+                                                            (assoc f :____select____ true)
+                                                            f))
+                                                        fields)))))
 
 ;;TODO df.withColumnRenamed("DEST_COUNTRY_NAME", "dest").columns,maybe {!field1 : field2}
 (defn add-columns [df m]
@@ -113,11 +117,31 @@
                        (into-array Column (rest acc))
                        (into-array Column []))]
         (if acc-first
-          (if (nil? first-col)
-            (unset (.agg ^RelationalGroupedDataset group acc-first acc-rest)
-                   :NULL)
-            (.agg ^RelationalGroupedDataset group acc-first acc-rest))
+          (.agg ^RelationalGroupedDataset group acc-first acc-rest)
           group)))))
+
+(defn agg
+  "Call ways
+    No accumulators
+    (group :field1 :field2 ...) = select and distinct
+    Group and accumulators
+    (group :field1 :field2 ...
+           {:acField1 (acc-f :field)})
+    No group (result will have only the acc fields)
+    (group nil
+           {:acField1 (acc-f :field)})"
+  [grouped-df & accs]
+  (let [acc-maps (single-maps (into [] accs))]
+    (let [acc (mapv (fn [m]
+                      (let [field-name (name (first (keys m)))
+                            acc-value (first (vals m))]
+                        (.as acc-value field-name)))
+                    acc-maps)
+          acc-first  (first acc)
+          acc-rest (if (> (count acc) 1)
+                     (into-array Column (rest acc))
+                     (into-array Column []))]
+      (.agg ^RelationalGroupedDataset grouped-df acc-first acc-rest))))
 
 (defn select-distinct
   ([df & cols] (.distinct ^Dataset (apply (partial select df) cols)))
