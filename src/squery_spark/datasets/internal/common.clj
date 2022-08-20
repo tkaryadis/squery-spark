@@ -44,13 +44,13 @@
 
     ;;map in clojure means struct not MapType
     (map? field)
-    (if (empty? field)
+    #_(if (empty? field)
       (functions/struct (into-array Column []))
       (functions/struct (into-array Column (map column (reduce (fn [v t]
                                                                  (conj v (.alias ^Column (column (get t 1)) (get t 0)) ))
                                                                []
                                                                (into [] (string-map field)))))))
-    #_(functions/map (into-array Column (map column (reduce (fn [v t]
+    (functions/map (into-array Column (map column (reduce (fn [v t]
                                                             (conj v (get t 0) (get t 1)))
                                                           (into [] (string-map field))))))
 
@@ -85,13 +85,13 @@
         (.as v k)))
 
     (map? field)
-    (if (empty? field)
+    #_(if (empty? field)
       (functions/struct (into-array Column []))
       (functions/struct (into-array Column (map column (reduce (fn [v t]
                                                                  (conj v (.alias ^Column (column (get t 1)) (get t 0)) ))
                                                                []
                                                                (into [] (string-map field)))))))
-    #_(functions/map (into-array Column (map column (reduce (fn [v t]
+    (functions/map (into-array Column (map column (reduce (fn [v t]
                                                             (conj v (get t 0) (get t 1)))
                                                           (into [] (string-map field))))))
 

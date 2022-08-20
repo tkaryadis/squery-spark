@@ -160,42 +160,21 @@
    {:sub (second (split-str :data ","))}
    show)
 
-;;15  skipped TODO in general case when i dont know how many parts
-#_(q t1
-   [{:data "111.22.3.4"}]
-   {:data (mget (reduce (fn [v m]
-                          {"index" [(inc (mget v ["index" 0]))]
-                           "data"  (conj (mget v "data")
-                                         (str (mget v ["index" 0]) "-" m))})
-                        {"index" [1] "data" (string-array [])}
-                        (split-str :data "\\."))
-                "data")}
-   {:data (explode :data)}
-   {:part (get (split-str :data "-") 0)
-    :data (get (split-str :data "-") 1)}
-   (group :data)
-   (pivot :part)
-   (agg {:x (first-a :data)})
-   (show false))
-
-;;15
-
+;;15  (solved in general case with uknown parts, with pivot)
 (q t1
    [{:data "111.22.3.4"}]
-   {:p {"a" 1 "b" 2 }}
-   {:z (dissoc :p "a")}
-   ;(unset :data)
-
-   #_{:p (functions/struct (into-array Column []))}
-   #_{:parts (reduce (fn [v t]
-                       (assoc v (c/rand-int 100) t))
-                     {}
-                     (split-str :data "\\."))}
-   ;show
-   .printSchema)
-
-
-
+   [{:data (explode (mget
+                      (reduce (fn [v t]
+                                {"index" [(inc (mget v ["index" 0]))]
+                                 "data" (conj (mget v "data") (str (mget v ["index" 0]) "-" t))})
+                              {"index" [1] "data" (string-array)}
+                              (split-str :data "\\."))
+                      "data"))}]
+   (group nil)
+   (pivot (first (split-str :data "-")))
+   (agg {:t (first-a (second (split-str :data "-")))})
+   (unset :NULL)
+   (show false))
 
 
 ;;16-17 skipped  soundex and some regex

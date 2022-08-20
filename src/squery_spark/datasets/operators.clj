@@ -255,13 +255,26 @@
 
 (defn assoc [col & pairs]
   (c/reduce (c/fn [v t]
-              (prn (c/first t))
               (.withField v (c/first t) (column (c/second t))))
             (column col)
             (c/partition 2 pairs)))
 
 (defn dissoc [col & fields]
   (.dropFields ^Column (column col) (clj->scala1 fields)))
+
+
+;;---------------------------Map--------------------------------------------
+
+;;mget bellow on arrays
+
+(defn massoc [col & pairs]
+  (c/reduce (c/fn [v t]
+              (functions/map_concat
+                (into-array Column [v
+                                    (functions/map
+                                      (into-array Column [(column (c/first t)) (column (c/second t))]))])))
+            (column col)
+            (c/partition 2 pairs)))
 
 ;;---------------------------Arrays-----------------------------------------
 ;;--------------------------------------------------------------------------
@@ -706,6 +719,7 @@
     assoc squery-spark.datasets.operators/assoc
     dissoc squery-spark.datasets.operators/dissoc
     mget squery-spark.datasets.operators/mget
+    massoc squery-spark.datasets.operators/massoc
     date-to-string squery-spark.datasets.operators/date-to-string
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
