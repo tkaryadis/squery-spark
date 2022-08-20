@@ -11,45 +11,34 @@
             [squery-spark.delta-lake.schema :refer :all]
             [squery-spark.datasets.udf :refer :all])
   (:refer-clojure)
-  (:require [clojure.core :as c]
-            [clojure.main :refer [demunge]]
-            )
-  (:import (org.apache.spark.sql functions Column Dataset)
-           (org.apache.spark.sql.expressions Window WindowSpec))
-  (:gen-class)
-  )
+  (:require [clojure.core :as c])
+  (:gen-class))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
 (def data-path "/home/white/IdeaProjects/squery-spark/data-used/sql-cookbook-book/")   ;;CHANGE THIS!!!
 
-(def t1 (-> spark (.range 10)))
-(show t1)
+;;-----------------------------------------udf---------------------------------------------
 
 
-;;-------------------------UDF-------------------------------------
+;;val udfExampleDF = spark.range(5).toDF("num")
+;def power3(number:Double):Double = number * number * number
+;val power3udf = udf(power3(_:Double):Double)
+;udfExampleDF.select(power3udf(col("num"))).show()
+;spark.udf.register("power3", power3(_:Double):Double)
+;udfExampleDF.selectExpr("power3(num)").show(2)
 
-#_(defudf spark myudf1 (fn [x] (* x 2)) 1 :long)
-#_(defudf spark myudf2 :long [x] (* x 2))
+;;macros, they expand to def, second one has 1 less argument (doesnt need the number of arguments it takes)
+;;fn metadata can help and might change in future
+(defudf spark power3 (fn [x] (* x x x)) 1 :long)
+(defudf spark power3-1 :long [x] (* x x x))
 
-#_(q t1
-   {:a (myudf1 :id)}
-   show)
-
-#_(q t1
-   {:a (myudf2 :id)}
-   show)
-
-(defnscala1 z (fn [x] (+ x 30)))
-
-(q t1
-   {:a [1 2 3]}
-   [(map z :a)]
-   show)
-
-(q t1
-   {:a [1 2 3]}
-   [(map1 (fn [x] (+ x 40)) :a)]
+;;requires aot, main, and run with leinengen
+(q spark
+   (.range 5)
+   (todf "num")
+   {:way1 (power3 :num)
+    :way2 (power3-1 :num)}
    show)
 
 (defn -main [])

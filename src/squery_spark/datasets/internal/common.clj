@@ -42,7 +42,7 @@
         (.as v k meta)
         (.as v k)))
 
-    ;;map in clojure means struct not MapType
+    ;;map in clojure means MapType not struct
     (map? field)
     #_(if (empty? field)
       (functions/struct (into-array Column []))
@@ -52,7 +52,18 @@
                                                                (into [] (string-map field)))))))
     (functions/map (into-array Column (map column (reduce (fn [v t]
                                                             (conj v (get t 0) (get t 1)))
-                                                          (into [] (string-map field))))))
+                                                          (into [] field)))))
+
+    (list? field)
+    (if (empty? field)
+      (functions/struct (into-array Column []))
+      (functions/struct (into-array Column
+                                    (map column (reduce (fn [v t]
+                                                          (conj v (if (map? t)
+                                                                    (.alias ^Column (column (first (keys t))) (first (vals t)))
+                                                                    (column t))))
+                                                        []
+                                                        field)))))
 
     (not (instance? org.apache.spark.sql.Column field))
     (functions/lit field)
@@ -84,16 +95,28 @@
         (.as v k meta)
         (.as v k)))
 
+    ;;map in clojure means MapType not struct
     (map? field)
     #_(if (empty? field)
-      (functions/struct (into-array Column []))
-      (functions/struct (into-array Column (map column (reduce (fn [v t]
-                                                                 (conj v (.alias ^Column (column (get t 1)) (get t 0)) ))
-                                                               []
-                                                               (into [] (string-map field)))))))
+        (functions/struct (into-array Column []))
+        (functions/struct (into-array Column (map column (reduce (fn [v t]
+                                                                   (conj v (.alias ^Column (column (get t 1)) (get t 0)) ))
+                                                                 []
+                                                                 (into [] (string-map field)))))))
     (functions/map (into-array Column (map column (reduce (fn [v t]
                                                             (conj v (get t 0) (get t 1)))
-                                                          (into [] (string-map field))))))
+                                                          (into [] field)))))
+
+    (list? field)
+    (if (empty? field)
+      (functions/struct (into-array Column []))
+      (functions/struct (into-array Column
+                                    (map column (reduce (fn [v t]
+                                                          (conj v (if (map? t)
+                                                                    (.alias ^Column (column (first (keys t))) (first (vals t)))
+                                                                    (column t))))
+                                                        []
+                                                        field)))))
 
     :else
     field))

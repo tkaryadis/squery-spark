@@ -172,10 +172,9 @@
                       "data"))}]
    (group nil)
    (pivot (first (split-str :data "-")))
-   (agg {:t (first-a (second (split-str :data "-")))})
+   (agg (first-a (second (split-str :data "-"))))
    (unset :NULL)
    (show false))
-
 
 ;;16-17 skipped  soundex and some regex
 

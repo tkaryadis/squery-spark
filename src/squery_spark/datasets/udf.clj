@@ -67,17 +67,15 @@
                (.register name new-udf rtype))]
     (partial call-udf name)))
 
-(defmacro defudf [spark arg1 arg2 arg3 arg4]
+(defmacro defudf [spark fname arg2 arg3 arg4]
   (if (vector? arg3)
     ;;define "spark" function
-    (let [fname arg1
-          rtype arg2
+    (let [rtype arg2
           args arg3
           body arg4]
       `(def ~fname (register-udf ~spark (fn ~args ~body) ~(count args) ~rtype)))
     ;;use already defined clojure function
-    (let [fname arg1
-          f arg2
+    (let [f arg2
           nargs arg3
           rtype arg4]
       `(def ~fname (register-udf ~spark ~f ~nargs ~rtype)))))

@@ -12,7 +12,7 @@
             [squery-spark.datasets.udf :refer :all])
   (:refer-clojure)
   (:require [clojure.core :as c])
-  (:import (org.apache.spark.sql functions Column RelationalGroupedDataset)
+  (:import (org.apache.spark.sql functions Column RelationalGroupedDataset Dataset)
            (org.apache.spark.sql.expressions Window WindowSpec)
            (org.apache.spark.sql.types DataTypes ArrayType)
            (java.util Arrays)))
@@ -359,4 +359,68 @@
 ;;;;df.na.replace("Description", Map("" -> "UNKNOWN"))
 (q df (replace-na :Description {"" "UNKNOWN"}))
 
-;;done until complex types
+;;df.selectExpr("(Description, InvoiceNo) as complex", "*")
+;df.selectExpr("struct(Description, InvoiceNo) as complex", "*")
+
+(q df
+   {:complex '(:Description :InvoiceNo)}
+   (show false))
+
+;;val complexDF = df.select(struct("Description", "InvoiceNo").alias("complex"))
+;complexDF.createOrReplaceTempView("complexDF")
+;complexDF.select("complex.Description")
+;complexDF.select(col("complex").getField("Description"))
+
+(def complex-df (q df [{:complex '(:Description :InvoiceNo)}]))
+(q complex-df [(get :complex :Description)] (show false))
+(q complex-df [:complex.Description] (show false))
+(q complex-df [:complex.*] (show false))
+
+;;df.select(split(col("Description"), " ")).show(2)
+;df.select(split(col("Description"), " ").alias("array_col"))
+;  .selectExpr("array_col[0]").show(2)
+
+(q df [(split-str :Description " ")] (show 2))
+(q df
+   [{:array-col (split-str :Description " ")}]
+   [(get :array-col 0)]
+   (show 2))
+
+;;df.select(size(split(col("Description"), " "))).show(2)
+
+(q df [(count (split-str :Description " "))] (show 2))
+
+;;;df.select(array_contains(split(col("Description"), " "), "WHITE")).show(2)
+;df.withColumn("splitted", split(col("Description"), " "))
+;  .withColumn("exploded", explode(col("splitted")))
+;  .select("Description", "InvoiceNo", "exploded").show(2)
+
+(q df [(contains? (split-str :Description " ") "WHITE")] (show 2))
+(q df
+   {:splitted (split-str :Description " ")}
+   {:exploded (explode :splitted)}
+   [:Description :InvoiceNo :exploded]
+   (show 2))
+
+;;df.select(map(col("Description"), col("InvoiceNo")).alias("complex_map")).show(2)
+;df.select(map(col("Description"), col("InvoiceNo")).alias("complex_map"))
+;  .selectExpr("complex_map['WHITE METAL LANTERN']").show(2)
+
+(q df
+   [{:complex-map {:Description :InvoiceNo}}]
+   (show 2 false))
+
+(q df
+   [{:complex-map {:Description :InvoiceNo}}]
+   [(mget :complex-map "WHITE METAL LANTERN")]
+   (show 2))
+
+;;;;df.select(map(col("Description"), col("InvoiceNo")).alias("complex_map"))
+;;  .selectExpr("explode(complex_map)").show(2)
+
+(q df [{:complex-map {:Description :InvoiceNo}}] [(explode :complex-map)] (show 2))
+
+;;json skipped
+
+;;for udf see udftest.clj
+

@@ -17,7 +17,7 @@
 
                  ]
   :aot [
-        ;squery-spark.udftest
+        squery-spark.udftest        ;;udf requires aot, main,gen-class, and run with leinengen
         ]
 
   :plugins [[lein-codox "0.10.7"]]
