@@ -17,11 +17,11 @@
             [squery-spark.utils.utils :refer [nested2 nested3]]
             [squery-spark.datasets.schema :refer [array-type]]
             [squery-spark.datasets.internal.common :refer [column]]
-            [squery-spark.utils.interop :refer [clj->scala1]]
             [erp12.fijit.collection :refer [to-scala-seq to-scala-list]])
   (:import [org.apache.spark.sql functions Column Dataset]
            (org.apache.spark.sql.expressions Window WindowSpec)
            (scala Function1 Function2)))
+
 
 ;;Operators for columns
 
@@ -260,7 +260,7 @@
             (c/partition 2 pairs)))
 
 (defn dissoc [col & fields]
-  (.dropFields ^Column (column col) (clj->scala1 fields)))
+  (.dropFields ^Column (column col) (to-scala-seq fields)))
 
 
 ;;---------------------------Map--------------------------------------------
@@ -655,11 +655,6 @@
 (defn asc [col]
   (.asc (column col)))
 
-(defn todf
-  ([df & col-names]
-   (.toDF df (into-array String (c/map name col-names))))
-  ([df] (.toDF df)))
-
 (defn soundex [col]
   (functions/soundex (column col)))
 
@@ -795,7 +790,6 @@
     string-array squery-spark.datasets.operators/string-array
     asc squery-spark.datasets.operators/asc
     desc squery-spark.datasets.operators/desc
-    todf squery-spark.datasets.operators/todf
     soundex squery-spark.datasets.operators/soundex
 
     ;;statistics

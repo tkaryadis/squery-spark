@@ -4,17 +4,24 @@
             [squery-spark.datasets.internal.common :refer [columns]])
   (:import (org.apache.spark.sql RowFactory Column SparkSession)))
 
-(defn parallelize [spark data]
-  (-> (get-java-spark-context spark)
-      (.parallelize data)))
+(defn parallelize
+  ([spark data] (-> (get-java-spark-context spark)
+                    (.parallelize data)))
+  ([spark data npartitions]
+   (-> (get-java-spark-context spark)
+       (.parallelize data npartitions))))
 
 (defn seq->row [seq]
   (if (not (coll? seq))
     (RowFactory/create (into-array Object [seq]))
     (RowFactory/create (into-array Object seq))))
 
-(defn seq->rdd [spark seq]
+(defn seq->rdd-rows [spark seq]
   (parallelize spark (map seq->row seq)))
+
+(defn seq->rdd
+  ([spark seq] (parallelize spark seq))
+  ([spark seq npartitions] (parallelize spark seq npartitions)))
 
 (defn rdd->df [spark rdd schema]
   (let [schema (if (vector? schema) (build-schema schema) schema)]

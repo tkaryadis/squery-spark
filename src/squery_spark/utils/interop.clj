@@ -1,19 +1,22 @@
 (ns squery-spark.utils.interop
   (:require [erp12.fijit.collection :refer [to-scala-seq]])
   (:import (scala.jdk.javaapi CollectionConverters)
-           (java.util ArrayList List)))
+           (java.util ArrayList List)
+           (scala Function0 Function1 Function2 Function3)))
 
 
-#_(defn clj->scala1 [seq]
-  (let [scala-buf (ListBuffer.)]
-    (doall (map #(.$plus$eq scala-buf %) (flatten [seq])))
-    scala-buf))
+;;moved them to udf
 
-;;scala.collection.JavaConverters.asScalaIteratorConverter(list.iterator()).asScala().toSeq();
-#_(defn clj->scala [coll]
-  (-> coll JavaConversions/asScalaBuffer .toList))
+(comment
+(defn ->scala-function0 [f]
+  (reify Function0 (apply [_] (f))))
 
-;;CollectionConverters.asScala(javaList).toSeq();
+(defn ->scala-function1 [f]
+  (reify Function1 (apply [_ x] (f x))))
 
-(defn clj->scala1 [seq]
-  (.toSeq (CollectionConverters/asScala ^List (ArrayList. seq))))
+(defn ->scala-function2 [f]
+  (reify Function2 (apply [_ x y] (f x y))))
+
+(defn ->scala-function3 [f]
+  (reify Function3 (apply [_ x y z] (f x y z))))
+)

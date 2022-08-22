@@ -56,3 +56,8 @@
 
 (defn header [df]
   (into [] (.columns df)))
+
+(defn todf
+  ([df & col-names]
+   (.toDF df (into-array String (map name col-names))))
+  ([df] (.toDF df)))

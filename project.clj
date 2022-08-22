@@ -12,16 +12,17 @@
                  [io.delta/delta-core_2.13 "2.0.0"]
 
                  [io.github.erp12/fijit "1.0.8"]
-
                  [org.flatland/ordered "1.5.9"]
 
                  ]
   :aot [
-        squery-spark.udftest        ;;udf requires aot, main,gen-class, and run with leinengen
+        squery-spark.spark-definitive-book.ch12     ;;rdd requires aot, main,gen-class, delete target, and run with leinengen
+        ;squery-spark.udftest        ;;udf requires aot, main,gen-class, delete target, and run with leinengen
         ]
 
   :plugins [[lein-codox "0.10.7"]]
   ;:javac-options ["-source" "1.8" "-target" "1.8"]
   ;:jvm-opts ^:replace ["-server" "-Xmx2g"]
-  :main squery-spark.udftest
+  :clean-targets [:target-path]                             ;;???? target isnt clean
+  :main    squery-spark.spark-definitive-book.ch12                ;squery-spark.udftest
   :global-vars {*warn-on-reflection* false})
