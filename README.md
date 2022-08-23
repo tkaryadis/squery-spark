@@ -5,10 +5,9 @@ Querying and data processing Clojure library, for Apache-Spark
 # Rationale
 
 SQL is a domain specific language, not a general programming language     
-Python/Scala/Java are general programming languages, but not domain specific languages     
-Use one or them, or combine them with code and queries in strings is problematic         
+Python/Scala/Java are general programming languages, but not domain specific languages      
 
-Clojure can do both, in simple way, its dynamic and functional running on JVM  
+Clojure can do both, in simple way, simpler than all alternatives.   
 
 Clojure is used because  
 1. we can make domain specific language with it so we don't need SQL
