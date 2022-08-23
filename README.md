@@ -2,17 +2,25 @@
 
 Querying and data processing Clojure library, for Apache-Spark, and Delta Lake.
 
-Clojure is used because    
- 1. runs on JVM    
- 2. its a general programming language
- 3. has macros and its ideal language to make DSL's     
- 4. its dynamic simple and practical    
- 5. its functional allowing natural data processing   
- 6. it has tree syntax, and can represent more complex nested pipelines   
+# Rationale
 
-This allows Clojure to be simpler from all alternatives Java,Scala,Python.  
-And because it's a general programming language we don't have to write queries
-in strings like in SQL.
+SQL is a domain specific language but its not a general programming language
+Python/Scala/Java are general programming languages, but not domain specific languages
+Use one or them, or combine them with code and queries in strings is problematic.
+
+Clojure can do both, in simple way, its dynamic and functional running on JVM
+
+Clojure is used because
+1. we can make domain specific language with it so we don't need SQL
+   (has macros and its homoiconic making it ideal language to make DSL's ) 
+2. its general programming language also 
+3. runs on JVM like spark
+4. its dynamic simple and practical    
+5. its functional allowing natural data processing   
+6. it has tree syntax, and nesting is supported from the language syntax
+   (not just line pipelines, but tree pipelines also)
+
+This allows Clojure to be simpler and more powerful from all alternatives Java,Scala,Python,SQL. 
 
 ## Design goals
 
@@ -20,7 +28,7 @@ in strings like in SQL.
    (see [cMQL](https://cmql.org/documentation/) the MongoDB query language that is based on Clojure syntax)
 2. use macro to use the Clojure operators inside the queries without namespace qualified names
 3. be simple as compact and simple as possible
-4. be programmable, no code in strings like SQL
+4. be programmable, not code in strings like SQL
 5. be simpler than all alternatives, Java,Scala,Python, including SQL
 
 Overall to feel as Clojure was a query language for spark.

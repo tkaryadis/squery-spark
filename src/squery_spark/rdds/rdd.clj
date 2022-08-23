@@ -1,4 +1,8 @@
 (ns squery-spark.rdds.rdd
+  (:refer-clojure :exclude [map reduce filter sort keys vals get
+                            count distinct seq take frequencies first
+                            max min print])
+  (:require [clojure.core :as c])
   (:import (org.apache.spark.api.java.function FlatMapFunction PairFunction Function Function2 VoidFunction)
            (org.apache.spark.api.java JavaRDD)
            (scala Tuple2)))
@@ -28,54 +32,66 @@
 (defrecord Pair [f]
   PairFunction
   (call [this x]
-    (let [vector-pair (f x)]
-      (Tuple2. (first vector-pair) (second vector-pair)))))
+    (c/let [vector-pair (f x)]
+      (Tuple2. (c/first vector-pair) (c/second vector-pair)))))
 
-(defn t [k v]
+(defn spair [k v]
   (Tuple2. k v))
+
+;;--------------------interop----------------------------------
+
+;;from https://github.com/zero-one-group/geni
+(defn scala-tuple->vec [p]
+  (->> (.productArity p)
+       (c/range)
+       (c/map #(.productElement p %))
+       (c/into [])))
+
+(defn pair [p]
+  [(.productElement p 0) (.productElement p 1)])
 
 ;;-------------------tranformations----------------------------
 
 ;;f argument must produce an iterable sequence for example seq,vector,list
 ;;that will be flatted
-(defn rflat-map [f rdd]
+(defn flat-map [f rdd]
   (.flatMap ^JavaRDD rdd (FlatMap. f)))
 
 (defn lflat-map [rdd f]
   (.flatMap ^JavaRDD rdd (FlatMap. f)))
 
-(defn rmap [f rdd]
+(defn map [f rdd]
   (.map ^JavaRDD rdd (F1. f)))
 
 (defn lmap [rdd f]
   (.map ^JavaRDD rdd (F1. f)))
 
-;;reduce operation on the partitions is not deterministic
-(defn lreduce [rdd f]
+(defn reduce [f rdd]
   (.reduce rdd (F2. f)))
 
-(defn rreduce [f rdd]
+;;reduce operation on the partitions is not deterministic
+(defn lreduce [rdd f]
   (.reduce rdd (F2. f)))
 
 (defn void-map [rdd f]
   (.foreach rdd (VF. f)))
 
-(defn rfilter [f rdd]
+(defn filter [f rdd]
   (.filter rdd (F1. f)))
 
 (defn lfilter [rdd f]
   (.filter rdd (F1. f)))
 
+(defn sort [f rdd]
+  (.sortBy rdd (F1. f) true 1))
+
 (defn lsort [rdd f]
   (.sortBy rdd (F1. f) true 1))
 
-(defn rsort [f rdd]
-  (.sortBy rdd (F1. f) true 1))
-
-(defn lsort! [rdd f]
+(defn sort-desc [f rdd]
   (.sortBy rdd (F1. f) false 1))
 
-(defn rsort! [f rdd]
+(defn lsort-desc [rdd f]
   (.sortBy rdd (F1. f) false 1))
 
 (defn random-split [rdd & weights]
@@ -89,59 +105,74 @@
 
 ;;-----------------transformations Pair related-------------------
 
-;;TODO
-;;map_ to (Tuple. a1 a2)  dont produce a JavaPairRDD (rdd with tutples produce)so i have to use mapToPair for it
-(defn mapToPair [rdd f]
+(defn map-to-pair [f rdd]
   (.mapToPair rdd (Pair. f)))
 
-(defn reduceByKey [rdd f]
+;;map_ to (Tuple. a1 a2)  dont produce a JavaPairRDD (rdd with tutples produce)so i have to use mapToPair for it
+(defn lmap-to-pair [rdd f]
+  (.mapToPair rdd (Pair. f)))
+
+(defn reduce-by-key [f rdd]
   (.reduceByKey rdd (F2. f)))
 
-(defn keyBy [rdd f]
+(defn lreduce-by-key [rdd f]
+  (.reduceByKey rdd (F2. f)))
+
+(defn key-by [f rdd]
   (.keyBy rdd (F1. f)))
 
-(defn mapValues [pair-rdd f]
+(defn lkey-by
+  "returns [f-result,key] scala.Tuple2"
+  [rdd f]
+  (.keyBy rdd (F1. f)))
+
+(defn map-values [f pair-rdd ]
   (.mapValues pair-rdd (F1. f)))
 
-(defn flatMapValues [pair-rdd f]
-  (.flatMapValues pair-rdd (F1. f)))
+(defn lmap-values [pair-rdd f]
+  (.mapValues pair-rdd (F1. f)))
+
+(defn flat-map-values [f pair-rdd]
+  (.flatMapValues pair-rdd (FlatMap. f)))
+
+(defn lflat-map-values
+  "[k,v] => (k,f=[v1 v2 ...]) (flatmap)=> (k,v1) (k,v2) ..."
+  [pair-rdd f]
+  (.flatMapValues pair-rdd (FlatMap. f)))
+
+(defn keys [rdd]
+  (.keys rdd))
+
+(defn vals [rdd]
+  (.values rdd))
+
+(defn get [rdd k]
+  (.lookup rdd k))
+
 
 ;;---------------------------------------------------
 
-(defn rcount [rdd]
+(defn count [rdd]
   (.count rdd))
 
-(defn rdistinct [rdd]
+(defn distinct [rdd]
   (.distinct rdd))
 
-(defn rlist [rdd]
+(defn seq [rdd]
   (.collect rdd))
 
-(defn ltake [rdd n]
+(defn take [n rdd]
   (.take rdd n))
 
-(defn rtake [n rdd]
-  (.take rdd n))
-
-;;java.util.List<T>	takeOrdered(int num)
-;Returns the first k (smallest) elements from this RDD using the natural ordering for T while maintain the order.
-;java.util.List<T>	takeOrdered(int num, java.util.Comparator<T> comp)
-;Returns the first k (smallest) elements from this RDD as defined by the specified Comparator[T] and maintains the order.
+(defn take-ordered
+  ([n rdd] (.takeOrdered rdd n))
+  ([n comp rdd] (.takeOrdered rdd n comp)))
 
 (defn ltake-ordered
   ([rdd n] (.takeOrdered rdd n))
   ([rdd n comp] (.takeOrdered rdd n comp)))
 
-(defn rtake-ordered
-  ([n rdd] (.takeOrdered rdd n))
-  ([n comp rdd] (.takeOrdered rdd n comp)))
-
-;;java.util.List<T>	top(int num)
-;Returns the top k (largest) elements from this RDD using the natural ordering for T and maintains the order.
-;java.util.List<T>	top(int num, java.util.Comparator<T> comp)
-;Returns the top k (largest) elements from this RDD as defined by the specified Comparator[T] and maintains the order.
-
-(defn rtop
+(defn top
   ([n rdd] (.top rdd n))
   ([n comp rdd] (.top rdd n comp)))
 
@@ -149,22 +180,84 @@
   ([rdd n] (.top rdd n))
   ([rdd n comp] (.top rdd n comp)))
 
-(defn rfrenquencies [rdd]
+(defn frequencies [rdd]
   (.countByValue rdd))
 
-(defn rfirst [rdd]
+(defn first [rdd]
   (.first rdd))
 
-(defn rmax [rdd comp]
+(defn max [rdd comp]
   (.max rdd comp))
 
-(defn rmin [rdd comp]
+(defn min [rdd comp]
   (.min rdd comp))
 
 ;;---------------------------------------------------
 
-(defn rprint [rdd]
-  (dorun (map println (-> rdd (.collect)))))
+(defn print [rdd]
+  (dorun (c/map c/print (-> rdd (.collect))))
+  (c/println))
+
+(defn print-pairs [paired-rdd]
+  (dorun (c/map (c/comp c/print pair) (-> paired-rdd (.collect))))
+  (c/println))
 
 (defn j-rdd [df]
   (-> df .rdd .toJavaRDD))
+
+;;---------------------------------------------------dsl---------------------------------------
+
+(def rdd-operators-mappings
+  '[
+    map squery-spark.rdds.rdd/map
+    reduce squery-spark.rdds.rdd/reduce
+    filter squery-spark.rdds.rdd/filter
+    sort squery-spark.rdds.rdd/sort
+    keys squery-spark.rdds.rdd/keys
+    vals squery-spark.rdds.rdd/vals 
+    get squery-spark.rdds.rdd/get
+    count squery-spark.rdds.rdd/count
+    distinct squery-spark.rdds.rdd/distinct
+    seq squery-spark.rdds.rdd/seq
+    take squery-spark.rdds.rdd/take
+    frequencies squery-spark.rdds.rdd/frequencies
+    first squery-spark.rdds.rdd/first
+    max squery-spark.rdds.rdd/max
+    min squery-spark.rdds.rdd/min
+    print squery-spark.rdds.rdd/print
+
+    ])
+
+(def rdd-clojure-mappings
+  '[
+    map clojure.core/map
+    reduce clojure.core/reduce
+    filter clojure.core/filter
+    sort clojure.core/sort
+    keys clojure.core/keys
+    vals clojure.core/vals
+    get clojure.core/get
+    count clojure.core/count
+    distinct clojure.core/distinct
+    seq clojure.core/seq
+    take clojure.core/take
+    frequencies clojure.core/frequencies
+    first clojure.core/first
+    max clojure.core/max
+    min clojure.core/min
+    print clojure.core/print
+
+    ])
+
+(defmacro r [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     ~@args))
+
+(defmacro r-> [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     (-> ~@args)))
+
+;;(fn [word] (* (c/count word) -1))
+(defmacro cfn [args body]
+  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
+     (fn ~args ~body)))

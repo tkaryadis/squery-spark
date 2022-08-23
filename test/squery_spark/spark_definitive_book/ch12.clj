@@ -1,23 +1,17 @@
 (ns squery-spark.spark-definitive-book.ch12
   (:refer-clojure :only [])
   (:require [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
-            [squery-spark.rdds.rdd :refer :all]
-
-    ;;dataset related
-            [squery-spark.datasets.queries :refer :all]
             [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
-            [squery-spark.datasets.stages :refer :all]
-            [squery-spark.datasets.operators :refer :all]
-            [squery-spark.datasets.schema :refer :all]
-            [squery-spark.datasets.rows :refer :all]
-            [squery-spark.datasets.utils :refer :all]
-            [squery-spark.delta-lake.queries :refer :all]
-            [squery-spark.delta-lake.schema :refer :all]
-            [squery-spark.datasets.udf :refer :all]
-
+            [squery-spark.datasets.utils :refer [seq->rdd rdd->df show]]
+            [squery-spark.datasets.schema :refer [todf]]
+            [squery-spark.datasets.rows :refer [row]]
+            [squery-spark.rdds.rdd :as r]
             [clojure.pprint :refer [pprint]]
+            [clojure.string :as s]
+            [clojure.core :as c]
 
-            )
+            ;;only for development, autocomplete of IDE, not needed
+            [squery-spark.rdds.rdd :refer :all])
   (:refer-clojure)
   (:import (org.apache.spark.sql Dataset RelationalGroupedDataset Column Row)
            (java.util HashMap)
@@ -32,10 +26,12 @@
 (defn -main [])
 
 ;;spark.range(500).rdd
-(-> spark (.range 500) j-rdd rprint)
+(r-> spark (.range 500) j-rdd print)
 
 ;;spark.range(10).toDF().rdd.map(rowObject => rowObject.getLong(0))
-(-> spark (.range 10) todf j-rdd (lmap (fn [row] (.getLong row 0))) rprint)
+
+;;lmap is the map with the rdd on the left as first arguments
+(r-> spark (.range 10) todf j-rdd (lmap (fn [row] (.getLong row 0))) print)
 
 ;;TODO simpler way? cant find toDF for java
 ;;spark.range(10).rdd.toDF()
@@ -52,7 +48,7 @@
 
 (def my-collection (clojure.string/split "Spark The Definitive Guide : Big Data Processing Made Simple" #"\s"))
 (def words (seq->rdd my-collection 2 spark))
-(rprint words)
+(r/print words)
 
 ;;words.setName("myWords")
 ;words.name
@@ -64,42 +60,46 @@
 ;spark.sparkContext.wholeTextFiles("/some/path/withTextFiles")
 
 ;;words.distinct().count()
-(prn (rcount (rdistinct words)))
+
+;;r is the macro, dsl local enviroment, to use shadow clojure
+;;here we dont need it, its only 2 functions, we could do it with r/print r/distinct (r meaning the namespace alias)
+(r (prn (count (distinct words))))
 
 ;;def startsWithS(individual:String) = {
 ;  individual.startsWith("S")
 ;}
 ;words.filter(word => startsWithS(word)).collect()
 
-(rprint (rfilter #(clojure.string/starts-with? % "S") words))
+(r (print (filter #(s/starts-with? % "S") words)))
 
 ;;val words2 = words.map(word => (word, word(0), word.startsWith("S")))
 
-(def words2 (rmap (fn [word] [word (first word) (clojure.string/starts-with? word "S")]) words))
-(rprint words2)
+(def words2 (r/map (fn [word] [word (first word) (s/starts-with? word "S")]) words))
+(r/print words2)
 
 ;;words2.filter(record => record._3).take(5)
 
-(pprint (rtake 5 (rfilter (fn [w] (true? (get w 2))) words2)))
+;; fn is used so we need c/get because we are in r enviroment
+(r (pprint (take 5 (filter (fn [w] (true? (c/get w 2))) words2))))
 
 ;;words.flatMap(word => word.toSeq).take(5)
 
-(pprint (rtake 5 (rflat-map (fn [word] (seq word)) words)))
+;;cfn is used, to hide the r enviroment
+;;r,cfn makes sense when alot of code, but cfn can be avoided by seperating the clojure code out of r enviroment
+(r (pprint (take 5 (flat-map (cfn [word] (seq word)) words))))
 
 ;words.sortBy(word => word.length() * -1).take(2)
 
-(pprint (rtake 2 (rsort! (fn [word] (* (count word) -1)) words)))
-
+(r (pprint (take 2 (sort-desc (cfn [word] (* (count word) -1)) words))))
 
 ;;val fiftyFiftySplit = words.randomSplit(Array[Double](0.5, 0.5))
 
 (def fity-fifty-split (random-split words 0.5 0.5))
-(dorun (map rprint fity-fifty-split))
-
+(dorun (map r/print fity-fifty-split))
 
 ;;spark.sparkContext.parallelize(1 to 20).reduce(_ + _) // 210
 
-(prn (rreduce (fn [x y] (+ x y)) (seq->rdd (range 1 21) spark)))
+(prn (r/reduce (fn [x y] (+ x y)) (seq->rdd (range 1 21) spark)))
 
 ;;def wordLengthReducer(leftWord:String, rightWord:String): String = {
 ;  if (leftWord.length > rightWord.length)
@@ -110,11 +110,11 @@
 ;words.reduce(wordLengthReducer)
 
 ;;reduces to the biggest word
-(prn (rreduce (fn [lw rw] (if (> (count lw) (count rw)) lw rw)) words))
+(prn (r/reduce (fn [lw rw] (if (> (count lw) (count rw)) lw rw)) words))
 
 ;;words.count()
 
-(prn (rcount words))
+(prn (r/count words))
 
 ;val confidence = 0.95
 ;val timeoutMilliseconds = 400
@@ -126,29 +126,29 @@
 
 ;;words.countByValue()
 
-(pprint (rfrenquencies words))
+(pprint (r/frequencies words))
 
 ;words.first()
 
-(prn (rfirst words))
+(prn (r/first words))
 
 
 ;;spark.sparkContext.parallelize(1 to 20).max()
 ;spark.sparkContext.parallelize(1 to 20).min()
 
 (let [rdd (seq->rdd (range 1 21) spark)]
-  (prn [(rmax rdd <) (rmin rdd <)]))
+  (prn [(r/max rdd <) (r/min rdd <)]))
 
 ;words.take(5)
 
-(pprint (rtake 5 words))
+(pprint (r/take 5 words))
 
 ;words.takeOrdered(5)
 
-(pprint (rtake-ordered 5 words))
+(pprint (r/take-ordered 5 words))
 
 ;words.top(5)
 
-(pprint (rtop 5 words))
+(pprint (r/top 5 words))
 
 ;;TODO there are some more

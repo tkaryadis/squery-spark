@@ -15,9 +15,11 @@
                  [org.flatland/ordered "1.5.9"]
 
                  ]
+  ;;aot, main,gen-class, delete target, and run with leinengen (sources that use udf+rdd)
   :aot [
-        squery-spark.spark-definitive-book.ch12     ;;rdd requires aot, main,gen-class, delete target, and run with leinengen
-        ;squery-spark.udftest        ;;udf requires aot, main,gen-class, delete target, and run with leinengen
+        ;squery-spark.spark-definitive-book.ch13
+        squery-spark.spark-definitive-book.ch12
+        ;squery-spark.udftest
         ]
 
   :plugins [[lein-codox "0.10.7"]]
