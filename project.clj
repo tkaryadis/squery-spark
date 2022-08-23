@@ -17,8 +17,8 @@
                  ]
   ;;aot, main,gen-class, delete target, and run with leinengen (sources that use udf+rdd)
   :aot [
-        ;squery-spark.spark-definitive-book.ch13
-        squery-spark.spark-definitive-book.ch12
+        squery-spark.spark-definitive-book.ch13
+        ;squery-spark.spark-definitive-book.ch12
         ;squery-spark.udftest
         ]
 

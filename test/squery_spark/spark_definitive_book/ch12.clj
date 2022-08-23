@@ -25,6 +25,15 @@
 (def data-path "/home/white/IdeaProjects/squery-spark/")
 (defn -main [])
 
+;;r is the namespace alias with the rdds
+;;r also is the macro with rdd dsl , its local shadowing
+;;r-> is the macro with rdd dsl and ->
+;;r shadows clojure, so we have 3 options, if we want to use clojure.core symbols that are shadowed inside the r enviroment
+;;   seperate the clojure code
+;;   fn c/map (c alias of clojure.core)
+;;   cfn and normal clojure, its like fn but shadows the r, that shadowed clojure
+;;   (all those dsl enviroments are few assignements with zero cost in perfomance)
+
 ;;spark.range(500).rdd
 (r-> spark (.range 500) j-rdd print)
 
