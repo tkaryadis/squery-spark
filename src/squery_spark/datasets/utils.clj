@@ -20,10 +20,10 @@
   (parallelize spark (map seq->row seq)))
 
 (defn seq->rdd
-  ([spark seq] (parallelize spark seq))
-  ([spark seq npartitions] (parallelize spark seq npartitions)))
+  ([seq spark] (parallelize spark seq))
+  ([seq npartitions spark] (parallelize spark seq npartitions)))
 
-(defn rdd->df [spark rdd schema]
+(defn rdd->df [rdd spark schema]
   (let [schema (if (vector? schema) (build-schema schema) schema)]
     (.createDataFrame ^SparkSession spark rdd schema)))
 

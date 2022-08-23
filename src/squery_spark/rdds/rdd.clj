@@ -38,7 +38,10 @@
 
 ;;f argument must produce an iterable sequence for example seq,vector,list
 ;;that will be flatted
-(defn flat-map-r [rdd f]
+(defn rflat-map [f rdd]
+  (.flatMap ^JavaRDD rdd (FlatMap. f)))
+
+(defn lflat-map [rdd f]
   (.flatMap ^JavaRDD rdd (FlatMap. f)))
 
 (defn rmap [f rdd]
@@ -48,17 +51,35 @@
   (.map ^JavaRDD rdd (F1. f)))
 
 ;;reduce operation on the partitions is not deterministic
-(defn reduce-r [rdd f]
+(defn lreduce [rdd f]
   (.reduce rdd (F2. f)))
 
-(defn foreach [rdd f]
+(defn rreduce [f rdd]
+  (.reduce rdd (F2. f)))
+
+(defn void-map [rdd f]
   (.foreach rdd (VF. f)))
 
-(defn filter-r [rdd f]
+(defn rfilter [f rdd]
   (.filter rdd (F1. f)))
 
-(defn sort-r [rdd f]
+(defn lfilter [rdd f]
+  (.filter rdd (F1. f)))
+
+(defn lsort [rdd f]
   (.sortBy rdd (F1. f) true 1))
+
+(defn rsort [f rdd]
+  (.sortBy rdd (F1. f) true 1))
+
+(defn lsort! [rdd f]
+  (.sortBy rdd (F1. f) false 1))
+
+(defn rsort! [f rdd]
+  (.sortBy rdd (F1. f) false 1))
+
+(defn random-split [rdd & weights]
+  (.randomSplit rdd (double-array weights)))
 
 (defn mapPartitions [rdd f]
   (.mapPartitions rdd (FlatMap. f)))
@@ -87,7 +108,62 @@
 
 ;;---------------------------------------------------
 
-(defn print-rdd [rdd]
+(defn rcount [rdd]
+  (.count rdd))
+
+(defn rdistinct [rdd]
+  (.distinct rdd))
+
+(defn rlist [rdd]
+  (.collect rdd))
+
+(defn ltake [rdd n]
+  (.take rdd n))
+
+(defn rtake [n rdd]
+  (.take rdd n))
+
+;;java.util.List<T>	takeOrdered(int num)
+;Returns the first k (smallest) elements from this RDD using the natural ordering for T while maintain the order.
+;java.util.List<T>	takeOrdered(int num, java.util.Comparator<T> comp)
+;Returns the first k (smallest) elements from this RDD as defined by the specified Comparator[T] and maintains the order.
+
+(defn ltake-ordered
+  ([rdd n] (.takeOrdered rdd n))
+  ([rdd n comp] (.takeOrdered rdd n comp)))
+
+(defn rtake-ordered
+  ([n rdd] (.takeOrdered rdd n))
+  ([n comp rdd] (.takeOrdered rdd n comp)))
+
+;;java.util.List<T>	top(int num)
+;Returns the top k (largest) elements from this RDD using the natural ordering for T and maintains the order.
+;java.util.List<T>	top(int num, java.util.Comparator<T> comp)
+;Returns the top k (largest) elements from this RDD as defined by the specified Comparator[T] and maintains the order.
+
+(defn rtop
+  ([n rdd] (.top rdd n))
+  ([n comp rdd] (.top rdd n comp)))
+
+(defn ltop
+  ([rdd n] (.top rdd n))
+  ([rdd n comp] (.top rdd n comp)))
+
+(defn rfrenquencies [rdd]
+  (.countByValue rdd))
+
+(defn rfirst [rdd]
+  (.first rdd))
+
+(defn rmax [rdd comp]
+  (.max rdd comp))
+
+(defn rmin [rdd comp]
+  (.min rdd comp))
+
+;;---------------------------------------------------
+
+(defn rprint [rdd]
   (dorun (map println (-> rdd (.collect)))))
 
 (defn j-rdd [df]

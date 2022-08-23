@@ -21,8 +21,6 @@
         ]
 
   :plugins [[lein-codox "0.10.7"]]
-  ;:javac-options ["-source" "1.8" "-target" "1.8"]
-  ;:jvm-opts ^:replace ["-server" "-Xmx2g"]
-  :clean-targets [:target-path]                             ;;???? target isnt clean
   :main    squery-spark.spark-definitive-book.ch12                ;squery-spark.udftest
   :global-vars {*warn-on-reflection* false})
+

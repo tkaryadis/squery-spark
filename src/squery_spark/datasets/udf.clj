@@ -129,3 +129,25 @@
       (prn))
 
 ;(prn (meta #'myf1))
+
+;;  (let [f (fn [x y z] (println x y z))]
+;    (require 'clojure.reflect)
+;    (->> (clojure.reflect/reflect f)
+;         :members
+;         (filter #(instance? clojure.reflect.Method %))
+;         first
+;         :parameter-types
+;         count))
+;
+;
+
+
+;  (let [f (fn
+;            ([x] (println x))
+;            ([x y] (println x y))
+;            ([x y z] (println x y z)))]
+;    (require 'clojure.reflect)
+;    (->> (clojure.reflect/reflect f)
+;         :members
+;         (filter #(instance? clojure.reflect.Method %))
+;         (map (comp count :parameter-types))))
