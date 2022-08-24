@@ -23,6 +23,8 @@
         ]
 
   :plugins [[lein-codox "0.10.7"]]
-  :main    squery-spark.spark-definitive-book.ch12                ;squery-spark.udftest
+  :source-paths ["src/clojure"]
+  :java-source-paths ["src/java"]
+  :main   squery-spark.spark-definitive-book.ch13                ;squery-spark.udftest
   :global-vars {*warn-on-reflection* false})
 

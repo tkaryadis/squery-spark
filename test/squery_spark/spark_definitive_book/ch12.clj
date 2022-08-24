@@ -95,7 +95,7 @@
 
 ;;cfn is used, to hide the r enviroment
 ;;r,cfn makes sense when alot of code, but cfn can be avoided by seperating the clojure code out of r enviroment
-(r (pprint (take 5 (flat-map (cfn [word] (seq word)) words))))
+(r (pprint (take 5 (map-flat (cfn [word] (seq word)) words))))
 
 ;words.sortBy(word => word.length() * -1).take(2)
 

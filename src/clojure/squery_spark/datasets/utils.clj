@@ -2,14 +2,17 @@
   (:require [squery-spark.state.connection :refer [get-java-spark-context]]
             [squery-spark.datasets.schema :refer [build-schema]]
             [squery-spark.datasets.internal.common :refer [columns]])
-  (:import (org.apache.spark.sql RowFactory Column SparkSession)))
+  (:import (org.apache.spark.sql RowFactory Column SparkSession)
+           (org.apache.spark SparkContext)
+           (org.apache.spark.api.java JavaRDD JavaSparkContext)))
 
 (defn parallelize
-  ([spark data] (-> (get-java-spark-context spark)
-                    (.parallelize data)))
+  ([spark data]
+   (-> ^JavaSparkContext (get-java-spark-context spark)
+       ^JavaRDD (.parallelize data)))
   ([spark data npartitions]
    (-> (get-java-spark-context spark)
-       (.parallelize data npartitions))))
+       ^JavaRDD (.parallelize data npartitions))))
 
 (defn seq->row [seq]
   (if (not (coll? seq))
