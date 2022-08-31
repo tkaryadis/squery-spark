@@ -19,7 +19,7 @@
     (RowFactory/create (into-array Object [seq]))
     (RowFactory/create (into-array Object seq))))
 
-(defn seq->rdd-rows [spark seq]
+(defn seq->rdd-rows [seq spark]
   (parallelize spark (map seq->row seq)))
 
 (defn seq->rdd
@@ -31,8 +31,8 @@
     (.createDataFrame ^SparkSession spark rdd schema)))
 
 (defn seq->df [spark seq schema]
-  (let [rdd (seq->rdd spark seq)]
-    (rdd->df spark rdd schema)))
+  (let [rdd (seq->rdd-rows seq spark)]
+    (rdd->df rdd spark schema)))
 
 (defn show
   ([df] (.show df))

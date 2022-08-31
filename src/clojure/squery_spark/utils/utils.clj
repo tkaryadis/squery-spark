@@ -1,6 +1,7 @@
 (ns squery-spark.utils.utils
   (:require clojure.repl
-            flatland.ordered.map))
+            flatland.ordered.map
+            [clojure.java.io :as io]))
 
 (defn ordered-map
   ([] (flatland.ordered.map/ordered-map))
@@ -52,4 +53,11 @@
       (if (empty? args)
         nested-f
         (recur (rest (rest args)) (f (first args) (second args) nested-f))))))
+
+(defn delete-directory-recursive
+  "Recursively delete a directory."
+  [^java.io.File file]
+  (when (.isDirectory file)
+    (run! delete-directory-recursive (.listFiles file)))
+  (io/delete-file file))
 

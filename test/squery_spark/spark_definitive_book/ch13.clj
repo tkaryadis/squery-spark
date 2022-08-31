@@ -204,3 +204,5 @@
 (prn (r/count words))
 
 (print-pairs (zip words num-range))
+
+;;TODO some more it had

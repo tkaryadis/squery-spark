@@ -3,11 +3,6 @@
            (org.apache.spark.api.java JavaSparkContext)
            (org.apache.spark SparkConf)))
 
-;;.config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-;    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-;
-;spark = configure_spark_with_delta_pip(builder).getOrCreate()
-
 (defn get-spark-session []
   (let [conf (-> (SparkConf.)
                  (.setMaster "local[*]")
@@ -17,9 +12,9 @@
                  )
         spark-session (-> (SparkSession/builder)
                           (.config conf)
-                          (.config "spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-                          (.config "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
                           (.config "spark.sql.mapKeyDedupPolicy" "LAST_WIN")
+                          (.config "spark.mongodb.read.connection.uri", "mongodb://127.0.0.1")
+                          (.config "spark.mongodb.write.connection.uri", "mongodb://127.0.0.1")
                           (.getOrCreate))]
     spark-session))
 

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Leiningen: org.typelevel/spire-macros_2.13:0.17.0">
-    <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/typelevel/spire-macros_2.13/0.17.0/spire-macros_2.13-0.17.0.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

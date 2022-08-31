@@ -22,3 +22,4 @@ pom.xml.asc
 /data-used/delta-lake-docs/
 /test/squery_spark/delta_lake_docs/spark-warehouse/
 /test/squery_spark/spark_definitive_book/spark-warehouse/
+/.idea/
