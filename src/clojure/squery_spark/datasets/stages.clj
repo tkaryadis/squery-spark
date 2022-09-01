@@ -87,39 +87,6 @@
                    cols)]
     (.orderBy df (into-array Column cols))))
 
-;;TODO FIX THE NIL THE DROP NO NEED
-(defn group
-  "Call ways
-    No accumulators
-    (group :field1 :field2 ...) = select and distinct
-    Group and accumulators
-    (group :field1 :field2 ...
-           {:acField1 (acc-f :field)})
-    No group (result will have only the acc fields)
-    (group nil
-           {:acField1 (acc-f :field)})"
-  [df & cols-acc]
-  (let [[cols acc]  (if (vector? (first cols-acc))
-                      [(first cols-acc) (rest cols-acc)]
-                      [(filter #(not (map? %)) cols-acc) (filter #(map? %) cols-acc)])
-        first-col (first cols)
-        acc-maps (single-maps (into [] acc))]
-    (if (empty? acc-maps)
-      (.groupBy df (into-array Column (columns cols)))
-      (let [group (.groupBy df (into-array Column (columns cols)))
-            acc (mapv (fn [m]
-                        (let [field-name (name (first (keys m)))
-                              acc-value (first (vals m))]
-                          (.as acc-value field-name)))
-                      acc-maps)
-            acc-first  (first acc)
-            acc-rest (if (> (count acc) 1)
-                       (into-array Column (rest acc))
-                       (into-array Column []))]
-        (if acc-first
-          (.agg ^RelationalGroupedDataset group acc-first acc-rest)
-          group)))))
-
 (defn agg
   ""
   [grouped-df & accs]
@@ -136,6 +103,45 @@
                    (into-array Column (rest acc))
                    (into-array Column []))]
     (.agg ^RelationalGroupedDataset grouped-df acc-first acc-rest)))
+
+;;TODO FIX THE NIL THE DROP NO NEED
+(defn group
+  "Call ways
+    Group only
+     (group)=(group nil) (group field1 field2...)
+    Group and accumulators
+    (group :field1 :field2 ...
+           {:acField1 (acc-f :field)})
+    Accumultators only
+    (group {:acField1 (acc-f :field)})
+    = (group nil {:acField1 (acc-f :field)})
+    = (agg {:acField1 (acc-f :field)})"
+  [df & cols-acc]
+  (let [group-nil? (nil? (first cols-acc))
+        cols-acc (if group-nil? (rest cols-acc) cols-acc)
+        [cols acc]  [(filter #(not (map? %)) cols-acc) (filter #(map? %) cols-acc)]
+        acc-maps (single-maps (into [] acc))]
+    (cond
+      (empty? acc-maps)                                     ;;group only (group)=(group nil) (group field1 field2...)
+      (.groupBy df (into-array Column (columns cols)))
+
+      (empty? cols)                                         ;;agg only
+      (apply (partial agg df) acc-maps)
+
+      :else
+      (let [group (.groupBy df (into-array Column (columns cols)))
+            acc (mapv (fn [m]
+                        (let [field-name (name (first (keys m)))
+                              acc-value (first (vals m))]
+                          (.as acc-value field-name)))
+                      acc-maps)
+            acc-first  (first acc)
+            acc-rest (if (> (count acc) 1)
+                       (into-array Column (rest acc))
+                       (into-array Column []))]
+        (if acc-first
+          (.agg ^RelationalGroupedDataset group acc-first acc-rest)
+          group)))))
 
 (defn select-distinct
   ([df & cols] (.distinct ^Dataset (apply (partial select df) cols)))

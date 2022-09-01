@@ -21,7 +21,7 @@
       (.format "csv")
       (.option "header" "true")
       (.option "inferSchema" "true")
-      (.load (str data-path  "/data-test/definitive/2010-12-01.csv"))))
+      (.load (str data-path  "/data-used/spark-definitive-book/retail-data/by-day/2010-12-01.csv"))))
 
 (.printSchema df)
 
@@ -37,7 +37,7 @@
 
 
 (-> df
-    (select :CustomerID {:customer :CustomerID} {:customerlit 5} 20)
+    (select [:CustomerID {:customer :CustomerID} {:customerlit 5} 20])
     ;(.count)
     .show)
 

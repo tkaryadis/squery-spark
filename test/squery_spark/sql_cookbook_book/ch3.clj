@@ -7,8 +7,7 @@
             [squery-spark.datasets.schema :refer :all]
             [squery-spark.datasets.rows :refer :all]
             [squery-spark.datasets.utils :refer :all]
-            [squery-spark.delta-lake.queries :refer :all]
-            [squery-spark.delta-lake.schema :refer :all])
+            [squery-spark.mongo-connector.utils :refer [load-collection]])
   (:refer-clojure)
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql functions Column)
@@ -16,14 +15,14 @@
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
-(def data-path "/home/white/IdeaProjects/squery-spark/data-used/sql-cookbook-book/")   ;;CHANGE THIS!!!
 
-(def emp (-> spark .read (.format "delta") (.load (str data-path "/emp"))))
-(def dept (-> spark .read (.format "delta") (.load (str data-path "/dept"))))
-(def bonus (-> spark .read (.format "delta") (.load (str data-path "/bonus"))))
-(def bonus1 (-> spark .read (.format "delta") (.load (str data-path "/bonus1"))))
-(def bonus2 (-> spark .read (.format "delta") (.load (str data-path "/bonus2"))))
-(def t1 (seq->df spark [[1]] [[:id :long]]))
+(def emp (q (load-collection spark :cookbook.emp) [:empno :ename :job :mgr :hiredate :sal :comm :deptno]))
+(def dept (load-collection spark :cookbook.dept))
+(def bonus (load-collection spark :cookbook.bonus))
+(def bonus1 (load-collection spark :cookbook.bonus1))
+(def bonus2 (load-collection spark :cookbook.bonus2))
+(def t1 (load-collection spark :cookbook.t1))
+
 
 ;;1
 (q emp
@@ -106,10 +105,11 @@
          (= :e.empno :b.empno)
          :left_outer)
    (group nil
-          {:deptno (first :deptno)}
+          {:deptno (first-a :deptno)}
           {:total-sal (sum :sal)}
           {:total-bonus (sum (* :sal :bonus-perc))})
    show)
+
 
 ;;10
 (q (as emp :e)
@@ -120,7 +120,7 @@
          (= :e.empno :b.empno)
          :left_outer)
    (group nil
-          {:deptno (first :deptno)}
+          {:deptno (first-a :deptno)}
           {:total-sal (sum :sal)}
           {:total-bonus (sum (* :sal :bonus-perc))})
    show)
@@ -131,8 +131,9 @@
    (join (as dept :d)
          (= :e.deptno :d.deptno)
          :fullouter)
-   [:d.deptno :d.dname :e.ename]
+   ;[:d.deptno :d.dname :e.ename]
    show)
+
 
 ;;12
 (q emp

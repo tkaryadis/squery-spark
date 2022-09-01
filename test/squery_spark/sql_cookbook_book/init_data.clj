@@ -1,149 +1,108 @@
 (ns squery-spark.sql-cookbook-book.init-data
   (:refer-clojure :only [])
-  (:require [squery-spark.datasets.queries :refer :all]
-            [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
-            [squery-spark.datasets.stages :refer :all]
-            [squery-spark.datasets.operators :refer :all]
-            [squery-spark.datasets.schema :refer :all]
-            [squery-spark.datasets.rows :refer :all]
-            [squery-spark.datasets.utils :refer :all]
-            [squery-spark.delta-lake.queries :refer :all]
-            [squery-spark.delta-lake.schema :refer :all])
+  (:use squery-mongo-core.operators.operators
+        squery-mongo-core.operators.qoperators
+        squery-mongo-core.operators.uoperators
+        squery-mongo-core.operators.stages
+        squery-mongo-core.operators.options
+        squery-mongo.driver.cursor
+        squery-mongo.driver.document
+        squery-mongo.driver.settings
+        squery-mongo.driver.transactions
+        squery-mongo.driver.utils
+        squery-mongo.arguments
+        squery-mongo.commands
+        squery-mongo.macros
+        flatland.ordered.map)
   (:refer-clojure)
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql SparkSession Dataset)
-           (io.delta.tables DeltaTable)
            (java.text SimpleDateFormat)
            (java.sql Date)
-           (java.time Instant)))
+           (java.time Instant)
+           (com.mongodb MongoClientSettings)
+           (com.mongodb.client MongoClients)))
 
-(def spark (get-spark-session))
-(.setLogLevel (get-spark-context spark) "ERROR")
-(def data-path "/home/white/IdeaProjects/squery-spark/data-used/sql-cookbook-book/")   ;;CHANGE THIS!!!
-
-(def emp-df (seq->df spark [
-                            [7369, "SMITH", "CLERK",7902,"17-12-2005",800,nil,20]
-                            [7499, "ALLEN", "SALESMAN",7698,"20-02-2006", 1600,300,30]
-                            [7521 "WARD" "SALESMAN" 7698 "22-02-2006"  1250 500 30]
-                            [7566, "JONES", "MANAGER", 7839 "02-04-2006" , 2975,nil, 20]
-                            [7654, "MARTIN", "SALESMAN", 7698 "28-09-2006" , 1250, 1400, 30]
-                            [7698, "BLAKE", "MANAGER", 7839 , "01-05-2006" , 2850,nil, 30]
-                            [7782, "CLARK", "MANAGER" ,7839, "09-06-2006"  ,2450,nil,10]
-                            [7788, "SCOTT" ,"ANALYST", 7566, "09-12-2007" , 3000,nil, 20]
-                            [7839,"KING" ,"PRESIDENT" , nil "17-11-2006" , ,5000, nil,10]
-                            [7844, "TURNER", "SALESMAN" ,7698 ,"08-09-2006" , 1500 ,0 ,30]
-                            [7876, "ADAMS", "CLERK", 7788, "12-01-2008" , 1100,nil ,20]
-                            [7900, "JAMES" "CLERK", 7698, "03-12-2006"  ,950,nil ,30]
-                            [7902,"FORD" "ANALYST" ,7566 ,"03-12-2006"  ,3000,nil ,20]
-                            [7934 "MILLER" "CLERK" 7782 "23-01-2007"  1300 nil 10]
-                            ]
-                     [[:empno :long]
-                      :ename
-                      :job
-                      [:mgr :long]
-                      :hiredate
-                      [:sal :long]
-                      [:comm :long]
-                      [:deptno :long]]))
-
-(-> (DeltaTable/createOrReplace spark)
-    (table-columns [[:empno :long]
-                    :ename
-                    :job
-                    [:mgr :long]
-                    [:hiredate :date]
-                    [:sal :long]
-                    [:comm :long]
-                    [:deptno :long]])
-    (.property "description" "emp")
-    (.tableName "default.emp")
-    (.location (str data-path "/emp"))
-    (.execute))
+;;using squery-mongo
 
 
-(-> (q emp-df {:hiredate (date :hiredate "dd-mm-yyyy")})
-    .write
-    (.format "delta")
-    (.mode "overwrite")
-    (.saveAsTable "default.emp"))
 
-(def dept-df (seq->df spark [[10 "ACCOUNTING"  "NEW YORK"]
-                             [20 "RESEARCH"  "DALLAS" ]
-                             [30 "SALES" "CHICAGO" ]
-                             [40 "OPERATIONS" "BOSTON"]]
-                      [[:deptno :long]
-                       :dname
-                       :loc]))
+(update-defaults :client-settings (-> (MongoClientSettings/builder)
+                                      (.codecRegistry clj-registry) ;;Remove this if you want to decode in Java Document
+                                      (.build)))
 
-(-> (DeltaTable/createOrReplace spark)
-    (table-columns [[:deptno :long]
-                    :dname
-                    :loc])
-    (.property "description" "dept")
-    (.tableName "default.dept")
-    (.location (str data-path "/dept"))
-    (.execute))
+(update-defaults :client (MongoClients/create ^MongoClientSettings (defaults :client-settings)))
 
-(-> dept-df
-    .write
-    (.format "delta")
-    (.mode "overwrite")
-    (.saveAsTable "default.dept"))
+(def emp-docs [
+               {:empno 7369 :ename "SMITH" :job  "CLERK" :mgr 7902
+                :hiredate "17-12-2005" :sal 800 :comm nil :deptno 20 }
+               {:empno 7499 :ename "ALLEN" :job  "SALESMAN" :mgr 7698
+                :hiredate "20-02-2006" :sal 1600 :comm 300 :deptno 30 }
+               {:empno 7521 :ename "WARD" :job  "SALESMAN" :mgr 7698
+                :hiredate "22-02-2006" :sal 1250 :comm 500 :deptno 30 }
+               {:empno 7566 :ename "JONES" :job  "MANAGER" :mgr 7839
+                :hiredate "02-04-2006" :sal 2975 :comm nil :deptno 20 }
+               {:empno 7654 :ename "MARTIN" :job  "SALESMAN" :mgr 7698
+                :hiredate "28-09-2006" :sal 1250 :comm 1400 :deptno 30 }
+               {:empno 7698 :ename "BLAKE" :job  "MANAGER" :mgr 7839
+                :hiredate "01-05-2006" :sal 2850 :comm nil :deptno 30 }
+               {:empno 7782 :ename "CLARK" :job  "MANAGER" :mgr 7839
+                :hiredate "09-06-2006" :sal 2450 :comm nil :deptno 10 }
+               {:empno 7788 :ename "SCOTT" :job  "ANALYST" :mgr 7566
+                :hiredate "09-12-2007" :sal 3000 :comm nil :deptno 20 }
+               {:empno 7839 :ename "KING" :job  "PRESIDENT" :mgr nil
+                :hiredate "17-11-2006" :sal 5000 :comm nil :deptno 10 }
+               {:empno 7844 :ename "TURNER" :job "SALESMAN"  :mgr 7698
+                :hiredate "08-09-2006" :sal 1500 :comm 0 :deptno 30 }
+               {:empno 7876 :ename "ADAMS" :job "CLERK"  :mgr 7788
+                :hiredate "12-01-2008" :sal 1100 :comm nil :deptno 20 }
+               {:empno 7900 :ename "JAMES" :job "CLERK"  :mgr 7698
+                :hiredate "03-12-2006" :sal 950 :comm nil :deptno 30 }
+               {:empno 7902 :ename "FORD" :job "ANALYST"  :mgr 7566
+                :hiredate "03-12-2006" :sal 3000 :comm nil :deptno 20 }
+               {:empno 7934 :ename "MILLER" :job "CLERK"  :mgr 7782
+                :hiredate "23-01-2007" :sal 1300 :comm nil :deptno 10 }
+             ])
 
-(def bonus-df (seq->df spark
-                       [[7369 "14-03-2005" 1]
-                        [7900 "14-03-2005" 2]
-                        [7788 "14-03-2005" 3]]
-                       [[:empno :long] :received [:type :long]]))
+(try (drop-collection :cookbook.emp) (catch Exception e ""))
+(insert :cookbook.emp emp-docs)
+(update- :cookbook.emp (uq {:hiredate (date-from-string :hiredate "%d-%m-%Y")}))
 
-(-> (DeltaTable/createOrReplace spark)
-    (table-columns [[:empno :long] [:received :date] [:type :long]])
-    (.property "description" "bonus")
-    (.tableName "default.bonus")
-    (.location (str data-path "/bonus"))
-    (.execute))
+(def dept-docs [
+               {:deptno 10 :dname "ACCOUNTING" :loc "NEW YORK"  }
+                {:deptno 20 :dname "RESEARCH" :loc "DALLAS"  }
+                {:deptno 30 :dname "SALES" :loc "CHICAGO"  }
+                {:deptno 40 :dname "OPERATIONS" :loc "BOSTON"  }
 
-(-> (q bonus-df {:received (date :received "dd-mm-yyyy")})
-    .write
-    (.format "delta")
-    (.mode "overwrite")
-    (.saveAsTable "default.bonus"))
+               ])
 
+(try (drop-collection :cookbook.dept) (catch Exception e ""))
+(insert :cookbook.dept dept-docs)
 
-(def bonus-df1 (seq->df spark
-                       [[7934 "17-03-2005" 1]
-                        [7934 "15-02-2005" 2]
-                        [7839 "15-02-2005" 3]
-                        [7782 "15-02-2005" 1]]
-                       [[:empno :long] :received [:type :long]]))
+(def bonus-docs [{:empno 7369 :received "14-03-2005" :type 1}
+                 {:empno 7900 :received "14-03-2005" :type 2}
+                 {:empno 7788 :received "14-03-2005" :type 3}])
 
-(-> (DeltaTable/createOrReplace spark)
-    (table-columns [[:empno :long] [:received :date] [:type :long]])
-    (.property "description" "bonus1")
-    (.tableName "default.bonus1")
-    (.location (str data-path "/bonus1"))
-    (.execute))
+(try (drop-collection :cookbook.bonus) (catch Exception e ""))
+(insert :cookbook.bonus bonus-docs)
+(update- :cookbook.bonus (uq {:received (date-from-string :received "%d-%m-%Y")}))
 
-(-> (q bonus-df1 {:received (date :received "dd-mm-yyyy")})
-    .write
-    (.format "delta")
-    (.mode "overwrite")
-    (.saveAsTable "default.bonus1"))
+(def bonus1-docs [{:empno 7934 :received "17-03-2005" :type 1}
+                   {:empno 7934 :received "15-02-2005" :type 2}
+                   {:empno 7839 :received "15-02-2005" :type 3}
+                   {:empno 7782 :received "15-02-2005" :type 1}])
 
-(def bonus-df2 (seq->df spark
-                        [[7934 "17-03-2005" 1]
-                         [7934 "15-02-2005" 2]]
-                        [[:empno :long] :received [:type :long]]))
+(try (drop-collection :cookbook.bonus1) (catch Exception e ""))
+(insert :cookbook.bonus1 bonus1-docs)
+(update- :cookbook.bonus1 (uq {:received (date-from-string :received "%d-%m-%Y")}))
 
-(-> (DeltaTable/createOrReplace spark)
-    (table-columns [[:empno :long] [:received :date] [:type :long]])
-    (.property "description" "bonus2")
-    (.tableName "default.bonus2")
-    (.location (str data-path "/bonus2"))
-    (.execute))
+(def bonus2-docs [{:empno 7934 :received "17-03-2005" :type 1}
+                   {:empno 7934 :received "15-02-2005" :type 2}])
 
-(-> (q bonus-df2 {:received (date :received "dd-mm-yyyy")})
-    .write
-    (.format "delta")
-    (.mode "overwrite")
-    (.saveAsTable "default.bonus2"))
+(try (drop-collection :cookbook.bonus2) (catch Exception e ""))
+(insert :cookbook.bonus2 bonus2-docs)
+(update- :cookbook.bonus2 (uq {:received (date-from-string :received "%d-%m-%Y")}))
+
+(def t1-docs [{:_id 1}])
+(try (drop-collection :cookbook.t1) (catch Exception e ""))
+(insert :cookbook.t1 t1-docs)

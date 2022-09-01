@@ -7,9 +7,8 @@
             [squery-spark.datasets.schema :refer :all]
             [squery-spark.datasets.rows :refer :all]
             [squery-spark.datasets.utils :refer :all]
-            [squery-spark.delta-lake.queries :refer :all]
-            [squery-spark.delta-lake.schema :refer :all]
-            [squery-spark.datasets.udf :refer :all])
+            [squery-spark.datasets.udf :refer :all]
+            )
   (:refer-clojure)
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql functions Column RelationalGroupedDataset Dataset)

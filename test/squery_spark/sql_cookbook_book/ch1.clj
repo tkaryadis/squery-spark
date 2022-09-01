@@ -7,18 +7,16 @@
             [squery-spark.datasets.schema :refer :all]
             [squery-spark.datasets.rows :refer :all]
             [squery-spark.datasets.utils :refer :all]
-            [squery-spark.delta-lake.queries :refer :all]
-            [squery-spark.delta-lake.schema :refer :all])
+            [squery-spark.mongo-connector.utils :refer [load-collection]])
   (:refer-clojure)
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql functions)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
-(def data-path "/home/white/IdeaProjects/squery-spark/data-used/sql-cookbook-book/")   ;;CHANGE THIS!!!
 
-(def emp (-> spark .read (.format "delta") (.load (str data-path "/emp"))))
-(def dept (-> spark .read (.format "delta") (.load (str data-path "/dept"))))
+(def emp (q (load-collection spark :cookbook.emp) [:empno :ename :job :mgr :hiredate :sal :comm :deptno]))
+(def dept (load-collection spark :cookbook.dept))
 
 ;;1
 (q emp .show)

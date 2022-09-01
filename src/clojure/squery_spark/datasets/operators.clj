@@ -820,8 +820,7 @@
     fill-na squery-spark.datasets.stages/fill-na
     replace-na squery-spark.datasets.stages/replace-na
 
-    ;;delta
-    merge- squery-spark.delta-lake.queries/merge-
+
 
     ])
 
