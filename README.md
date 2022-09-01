@@ -79,15 +79,14 @@ WHERE (StockCode = 'DOT' AND
 
 ## Learn
 
-For overview `test.query_spark.qtest.clj`  
-
-See test/squery_spark, for now 2 books code is written in SQuery
+Examples are added by solving SQL problems with SQuery.    
+Databases used for data storage is MongoDB but you can use any.   
+MongoDB is used because SQuery run on MongoDB also so with almost same syntax both are queried. 
 
 1. SQL Practice Problems: 57 beginning, intermediate, and advanced challenges for you to solve
    using a “learn-by-doing” approach , by Sylvia Moestl Vasilik  (completed)
 2. Spark: The Definitive Guide: Big Data Processing Made Simple (partially)  
 3. SQL Cookbook: Query Solutions and Techniques for All SQL Users (partially)
-4. Delta lake documentation examples (partially)
 
 *squery is work in progress, so some examples might give compile errors if squery changed
 
