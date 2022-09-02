@@ -10,14 +10,13 @@ Python/Scala/Java are general programming languages, but not domain specific lan
 Clojure can do both, in simple way, simpler than all alternatives.   
 
 Clojure is used because  
-1. we can make domain specific language with it so we don't need SQL
-   (has macros and its homoiconic making it ideal language to make DSL's ) 
-2. its general programming language also 
+1. using Clojure macros, we can make a DSL   
+2. its general programming language also
+3. DSL code and normal Clojure code can be combined 
 3. runs on JVM like spark
 4. its dynamic simple and practical    
 5. its functional allowing natural data processing   
-6. it has tree syntax, and nesting is supported from the language syntax
-   (not just line pipelines, but tree pipelines also)
+6. its syntax provides support for nested pipelines(tree pipelines) not just vertical pipelines
 
 This allows Clojure to be simpler and more powerful from all alternatives Java,Scala,Python,SQL. 
 
@@ -40,11 +39,10 @@ SQuery
 
 ```
 (q df
-   {:isExpensive (and (= :StockCode "DOT")
-                      (or (> :UnitPrice 600) (substring? "POSTAGE" :description)))}
+   {:isExpensive 
+    (and (= :StockCode "DOT") (or (> :UnitPrice 600) (substring? "POSTAGE" :description)))}
    ((true? :isExpensive))
-   [:UnitPrice :isExpensive]
-   (show 5))
+   [:UnitPrice :isExpensive])
 ```
 
 Scala
@@ -55,7 +53,7 @@ val priceFilter = col("UnitPrice") > 600
 val descripFilter = col("Description").contains("POSTAGE")
 df.withColumn("isExpensive", DOTCodeFilter.and(priceFilter.or(descripFilter)))
 .where("isExpensive")
-.select("unitPrice", "isExpensive").show(5)
+.select("unitPrice", "isExpensive")
 ```
 
 Python
@@ -65,7 +63,7 @@ priceFilter = col("UnitPrice") > 600
 descripFilter = instr(col("Description"), "POSTAGE") >= 1
 df.withColumn("isExpensive", DOTCodeFilter & (priceFilter | descripFilter))\
 .where("isExpensive")\
-.select("unitPrice", "isExpensive").show(5)
+.select("unitPrice", "isExpensive")
 ```
 
 SQL
@@ -73,8 +71,7 @@ SQL
 SELECT UnitPrice, (StockCode = 'DOT' AND
 (UnitPrice > 600 OR instr(Description, "POSTAGE") >= 1)) as isExpensive
 FROM dfTable
-WHERE (StockCode = 'DOT' AND
-(UnitPrice > 600 OR instr(Description, "POSTAGE") >= 1))
+WHERE (StockCode = 'DOT' AND (UnitPrice > 600 OR instr(Description, "POSTAGE") >= 1))
 ```
 
 ## Learn
