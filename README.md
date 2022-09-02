@@ -18,7 +18,7 @@ Clojure is used because
 5. its functional allowing natural data processing   
 6. its syntax provides support for nested pipelines(tree pipelines) not just vertical pipelines
 
-This allows Clojure to be simpler and more powerful from all alternatives Java,Scala,Python,SQL. 
+This allows Clojure to be simpler and also more powerful from all alternatives Java,Scala,Python,SQL. 
 
 ## Design goals
 
