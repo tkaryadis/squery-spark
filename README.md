@@ -9,7 +9,7 @@ Python/Scala/Java are general programming languages, but not domain specific lan
 
 Clojure can do both, in simple way, simpler than all alternatives.   
 
-Clojure is used because  
+**Clojure is used because**
 1. using Clojure macros, we can make a DSL   
 2. its general programming language also
 3. DSL code and normal Clojure code can be combined 
