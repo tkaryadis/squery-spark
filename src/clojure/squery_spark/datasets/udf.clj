@@ -2,7 +2,7 @@
   (:require [squery-spark.state.state]
             [squery-spark.datasets.operators])
   (:import (org.apache.spark.sql.api.java UDF1 UDF0 UDF2 UDF3 UDF4)
-           [org.apache.spark.sql functions Column]
+           [org.apache.spark.sql functions Column Encoders]
            (scala Function0 Function1 Function2 Function3)))
 
 ;;---------UDF---------------------------------
@@ -80,15 +80,18 @@
           rtype arg4]
       `(def ~fname (register-udf ~spark ~f ~nargs ~rtype)))))
 
-(defn register-udaf [spark udaf-object]
+;;spark.udf().register("myAverage", functions.udaf(new MyAverage(), Encoders.LONG()));
+
+(defn register-udaf [spark udaf-object encoder]
   (let [name (squery-spark.state.state/new-udf-name)
-        _ (.register (.udf spark)
-                     name
-                     udaf-object)]
+        _ (-> spark
+              .udf
+              (.register name
+                         (functions/udaf udaf-object encoder)))]
     (partial squery-spark.datasets.udf/call-udf name)))
 
-(defmacro defudaf [spark fname udaf-object]
-  `(def ~fname (register-udaf ~spark ~udaf-object)))
+(defmacro defudaf [spark fname udaf-object encoder]
+  `(def ~fname (register-udaf ~spark ~udaf-object ~encoder)))
 
 ;;----------------------------------scala functions--------------------------------------------------------------------
 
