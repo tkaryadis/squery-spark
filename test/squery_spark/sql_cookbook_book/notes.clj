@@ -1,4 +1,4 @@
-(ns squery-spark.sql-cookbook-book.not-trivial
+(ns squery-spark.sql-cookbook-book.notes
   (:refer-clojure :only [])
   (:require [squery-spark.datasets.queries :refer :all]
             [squery-spark.state.connection :refer [get-spark-session get-spark-context]]

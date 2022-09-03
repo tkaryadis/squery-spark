@@ -16,7 +16,7 @@
             [squery-spark.datasets.schema :refer [schema-types]]
             [squery-spark.utils.utils :refer [nested2 nested3]]
             [squery-spark.datasets.schema :refer [array-type]]
-            [squery-spark.datasets.internal.common :refer [column]]
+            [squery-spark.datasets.internal.common :refer [column columns]]
             [erp12.fijit.collection :refer [to-scala-seq to-scala-list]])
   (:import [org.apache.spark.sql functions Column Dataset]
            (org.apache.spark.sql.expressions Window WindowSpec)
@@ -425,6 +425,13 @@
   (if (c/> (c/count cols) 1)
     (functions/count_distinct (column (c/first cols)) (into-array Column (columns (c/rest cols))))
     (functions/count_distinct (column (c/first cols)) (into-array Column []))))
+
+;(functions/percentile_approx (col "sal") (lit 0.5) (lit 100000))
+(defn percentile-approx
+  ([col percentage accurancy]
+   (functions/percentile_approx (column col) (column percentage) (column accurancy)))
+  ([col percentage]
+   (functions/percentile_approx (column col) (column percentage) (column 10000))))
 
 ;;---------------------------windowField------------------------------------
 ;;--------------------------------------------------------------------------

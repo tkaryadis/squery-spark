@@ -74,10 +74,11 @@
    show)
 
 
-;;7  udaf
-(defudaf spark mul-acc (ProductAcc.) (Encoders/LONG))
+;;7  udaf, uncomment and aot to run
 
-(q emp
+#_(defudaf spark mul-acc (ProductAcc.) (Encoders/LONG))
+
+#_(q emp
    ((= :deptno 10))
    {:running-prod (wfield (mul-acc :sal) (wsort :sal :empno))}
    show)
@@ -93,6 +94,51 @@
    (limit 1)
    [:sal]
    show)
+
+;;10
+(q emp
+   ((= :deptno 20))
+   (group {:median (percentile-approx :sal 0.5)})
+   show)
+
+;;11
+(q emp
+   (group {:deptno10 (+ 100 (sum (if- (= :deptno 10) :sal 0)))}
+          {:all (sum :sal)})
+   {:percentage (* (div :deptno10 :all) 100)}
+   show)
+
+;;12
+(q emp
+   (group {:avg (avg (coalesce :comm 0))})
+   show)
+
+;;this ignore nulls
+(q emp
+   (group {:avg (avg :comm)})
+   show)
+
+;;13
+(q emp
+   {:min (wfield (min :sal))
+    :max (wfield (max :sal))}
+   ((not= :sal :min) (not= :sal :max))
+   (group {:avg (avg :sal)})
+   show)
+
+
+;;14
+(q t1
+   [{:name "paul123f321."}]
+   {:numbers (replace :name "\\D" "")}
+   show)
+
+;;15-17 skipped
+
+
+
+
+
 
 
 
