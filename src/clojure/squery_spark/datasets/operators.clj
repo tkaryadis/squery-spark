@@ -213,6 +213,9 @@
 (defn long [col]
   (.cast (column col) (c/get schema-types :long)))
 
+(defn int [col]
+  (.cast (column col) (c/get schema-types :int)))
+
 (defn long-array
   ([col] (cast (column col) (array-type :long)))
   ([] (cast (column []) (array-type :long))))
@@ -220,6 +223,10 @@
 (defn string-array
   ([col] (cast (column col) (array-type :string)))
   ([] (cast (column []) (array-type :string))))
+
+(defn date-array
+  ([col] (cast (column col) (array-type :date)))
+  ([] (cast (column []) (array-type :date))))
 
 (defn date
   ([col] (functions/to_date (column col)))
@@ -609,6 +616,9 @@
 (defn day-of-month [col]
   (functions/dayofmonth (column col)))
 
+(defn day-of-week [col]
+  (functions/dayofweek (column col)))
+
 (defn last-day-of-month [col]
   (functions/last_day (column col)))
 
@@ -621,31 +631,29 @@
 (defn current-timestamp []
   (functions/current_timestamp))
 
+(defn months-between [start-col end-col]
+  (functions/months_between (column start-col) (column end-col)))
+
+;;i use those with negative also to sub
 (defn add-days [col-start column-or-number]
   (if (c/number? column-or-number)
     (functions/date_add (column col-start) (c/int column-or-number))
     (functions/date_add (column col-start) (column column-or-number))))
 
-(defn sub-days [col-start column-or-number]
+#_(defn sub-days [col-start column-or-number]
   (if (c/number? column-or-number)
     (functions/date_sub (column col-start) (c/int column-or-number))
     (functions/date_sub (column col-start) (column column-or-number))))
 
-#_(defn add-months [col-start column-or-number]
+(defn add-months [col-start column-or-number]
   (if (c/number? column-or-number)
     (functions/add_months (column col-start) (c/int column-or-number))
     (functions/add_months (column col-start) (column column-or-number))))
 
-#_(defn sub-months [col-start column-or-number]
+(defn add-years [col-start column-or-number]
   (if (c/number? column-or-number)
-    (functions/sub_months (column col-start) (c/int column-or-number))
-    (functions/sub_months (column col-start) (column column-or-number))))
-
-(defn months-between [start-col end-col]
-  (functions/months_between (column start-col) (column end-col)))
-
-
-
+    (functions/add_months (column col-start) (c/int (c/* column-or-number 12)))
+    (functions/add_months (column col-start) (column (* column-or-number 12)))))
 
 ;;-----------------------------Statistics-----------------------------------
 
@@ -726,14 +734,17 @@
     year squery-spark.datasets.operators/year
     month squery-spark.datasets.operators/month
     day-of-month squery-spark.datasets.operators/day-of-month
+    day-of-week squery-spark.datasets.operators/day-of-week
     last-day-of-month squery-spark.datasets.operators/last-day-of-month
     days-diff squery-spark.datasets.operators/days-diff
     current-date squery-spark.datasets.operators/current-date
     current-timestamp squery-spark.datasets.operators/current-timestamp
     add-days squery-spark.datasets.operators/add-days
-    sub-days squery-spark.datasets.operators/sub-days
-    ;;add-months squery-spark.datasets.operators/add-months
-    ;;sub-months squery-spark.datasets.operators/sub-months
+    ;sub-days squery-spark.datasets.operators/sub-days
+    add-months squery-spark.datasets.operators/add-months
+    ;sub-months squery-spark.datasets.operators/sub-months
+    add-years squery-spark.datasets.operators/add-years
+    ;sub-years squery-spark.datasets.operators/sub-years
     months-between squery-spark.datasets.operators/months-between
     concat squery-spark.datasets.operators/concat
     str squery-spark.datasets.operators/str
@@ -793,8 +804,10 @@
     cast squery-spark.datasets.operators/cast
     string squery-spark.datasets.operators/string
     long squery-spark.datasets.operators/long
+    int squery-spark.datasets.operators/int
     long-array squery-spark.datasets.operators/long-array
     string-array squery-spark.datasets.operators/string-array
+    date-array squery-spark.datasets.operators/date-array
     asc squery-spark.datasets.operators/asc
     desc squery-spark.datasets.operators/desc
     soundex squery-spark.datasets.operators/soundex

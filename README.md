@@ -74,6 +74,26 @@ FROM dfTable
 WHERE (StockCode = 'DOT' AND (UnitPrice > 600 OR instr(Description, "POSTAGE") >= 1))
 ```
 
+## SQuery mixed with Clojure
+
+Example of getting the working days and their count from a difference of 2 dates
+```
+(q t1
+   [{:date1 (date "2006-11-09" "yyyy-MM-dd")}
+    {:date2 (date "2006-12-09" "yyyy-MM-dd")}]
+   {:diff (days-diff :date2 :date1)}
+   {:working-dates  (reduce (fn [v t]
+                              (let [dt (add-days :date1 (int t))
+                                    dt-n (day-of-week dt)]
+                                (if- (and (not= dt-n 1) (not= dt-n 7))
+                                  (conj v dt)
+                                  v)))
+                            (date-array [])
+                            (range 0 :diff))}
+   {:working-days-count (count :working-dates)}
+   (show false))
+```
+
 ## Learn
 
 Examples are added by solving SQL problems with SQuery.    
