@@ -374,6 +374,7 @@
 ;Generate a sequence of integers from start to stop, incrementing by step.
 
 (defn range
+  ([end-col] (functions/sequence (lit 0) (column end-col)))
   ([start-col end-col] (functions/sequence (column start-col) (column end-col)))
   ([start-col end-col step-int] (functions/sequence (column start-col) (column end-col) (c/int step-int))))
 

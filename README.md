@@ -89,7 +89,7 @@ Example of getting the working days and their count from a difference of 2 dates
                                   (conj v dt)
                                   v)))
                             (date-array [])
-                            (range 0 :diff))}
+                            (range :diff))}
    {:working-days-count (count :working-dates)}
    (show false))
 ```

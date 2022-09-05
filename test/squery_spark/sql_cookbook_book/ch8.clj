@@ -70,6 +70,6 @@
                                   (conj v dt)
                                   v)))
                             (date-array [])
-                            (range 0 :diff))}
+                            (range :diff))}
    {:working-days-count (count :working-dates)}
    (show false))
