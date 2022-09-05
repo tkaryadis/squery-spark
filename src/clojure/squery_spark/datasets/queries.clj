@@ -10,6 +10,8 @@
 ;;   and to create the enviroment overriding some of clojure.core, only inside the q scope
 ;;   to access clojure.core inside the q scope use alias like c/str
 ;; 3)functions is used for everything else that can run on runtime
+;;TODO possible bug if this enviroment is moved with a macro to another place for example -> does it
+;; solution to avoid possible bug? create a custom version of -> that the enviroment is not moved at macro-expand?
 (defmacro q [qform & qforms]
   (let [qforms (pipeline qforms)
         ;_ (prn "qforms" qforms)

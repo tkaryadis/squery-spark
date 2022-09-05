@@ -32,8 +32,8 @@
 (defn abs [col]
   (functions/abs (column col)))
 
-(defn + [col1 col2]
-  (.plus (column col1) (column col2)))
+(defn + [& cols]
+  (nested2 #(.plus (column %1) (column %2)) cols))
 
 (defn inc [col]
   (.plus (column col) 1))
@@ -44,8 +44,8 @@
 (defn dec [col]
   (.minus (column col) 1))
 
-(defn * [col1 col2]
-  (.multiply  (column col1) (column col2)))
+(defn * [& cols]
+  (nested2 #(.plus (column %1) (column %2)) cols))
 
 (defn mod [col other]
   (.mod (column col) (column other)))
@@ -623,6 +623,15 @@
 (defn last-day-of-month [col]
   (functions/last_day (column col)))
 
+(defn hour [col]
+  (functions/hour (column col)))
+
+(defn minute [col]
+  (functions/minute (column col)))
+
+(defn second-date [col]
+  (functions/second (column col)))
+
 (defn days-diff [col-end col-start]
   (functions/datediff (column col-end)  (column col-start)))
 
@@ -632,8 +641,11 @@
 (defn current-timestamp []
   (functions/current_timestamp))
 
-(defn months-between [start-col end-col]
-  (functions/months_between (column start-col) (column end-col)))
+(defn months-diff [end-col start-col]
+  (functions/months_between (column end-col) (column start-col)))
+
+(defn years-diff [end-col start-col]
+  (- (year (column end-col)) (year (column start-col))))
 
 ;;i use those with negative also to sub
 (defn add-days [col-start column-or-number]
@@ -674,11 +686,20 @@
 (defn soundex [col]
   (functions/soundex (column col)))
 
+;;--------------------------derived------------------------------------------
+
+(defn days-to-hours [col-days]
+  (* (column col-days) (lit 24)))
+
+(defn days-to-minutes [col-days]
+  (* (column col-days) (lit (c/* 24 60))))
+
+(defn days-to-seconds [col-days]
+  (* (column col-days) (lit (c/* 24 60 3600))))
 
 ;;---------------------------------------------------------
 
 ;;TODO no need to override clojure, i can have internal names with other names
-;;TODO possible bug if this enviroment is moved with a macro to another place for example -> does it
 (def operators-mappings
   '[
     ;;Clojure overrides
@@ -737,6 +758,9 @@
     day-of-month squery-spark.datasets.operators/day-of-month
     day-of-week squery-spark.datasets.operators/day-of-week
     last-day-of-month squery-spark.datasets.operators/last-day-of-month
+    hour squery-spark.datasets.operators/hour
+    minute squery-spark.datasets.operators/minute
+    second-date squery-spark.datasets.operators/second-date
     days-diff squery-spark.datasets.operators/days-diff
     current-date squery-spark.datasets.operators/current-date
     current-timestamp squery-spark.datasets.operators/current-timestamp
@@ -746,7 +770,8 @@
     ;sub-months squery-spark.datasets.operators/sub-months
     add-years squery-spark.datasets.operators/add-years
     ;sub-years squery-spark.datasets.operators/sub-years
-    months-between squery-spark.datasets.operators/months-between
+    months-diff squery-spark.datasets.operators/months-diff
+    years-diff squery-spark.datasets.operators/years-diff
     concat squery-spark.datasets.operators/concat
     str squery-spark.datasets.operators/str
     join-str squery-spark.datasets.operators/join-str
@@ -815,6 +840,11 @@
 
     ;;statistics
     corr squery-spark.datasets.operators/corr
+
+    ;;derived
+    days-to-hours squery-spark.datasets.operators/days-to-hours
+    days-to-minutes squery-spark.datasets.operators/days-to-minutes
+    days-to-seconds squery-spark.datasets.operators/days-to-seconds
 
     ;;stages
     sort squery-spark.datasets.stages/sort

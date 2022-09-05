@@ -73,3 +73,44 @@
                             (range :diff))}
    {:working-days-count (count :working-dates)}
    (show false))
+
+;;4
+(q t1
+   [{:date2 (date "1983-01-12" "yyyy-MM-dd")}
+    {:date1 (date "1980-12-17" "yyyy-MM-dd")}]
+   {:months-dif (months-diff :date2 :date1)
+    :years-dif (years-diff :date2 :date1)}
+   show)
+
+;;5
+(q (as emp :e1)
+   ((= :e1.ename "ALLEN"))
+   (join (as emp :e2)
+         (= :e2.ename "WARD"))
+   [{:diff-days (days-diff :e2.hiredate :e1.hiredate)}]
+   {:diff-hour (days-to-hours :diff-days)
+    :diff-min (days-to-minutes :diff-days)
+    :diff-sec (days-to-seconds :diff-days)}
+   show)
+
+;;6
+(q t1
+   [{:date2 (date "1983-12-31" "yyyy-MM-dd")}
+    {:date1 (date "1983-01-01" "yyyy-MM-dd")}]
+   {:diff (days-diff :date2 :date1)}
+   {:working-dates  (reduce (fn [v t]
+                              (let [dt (add-days :date1 (int t))
+                                    dt-n (day-of-week dt)
+                                    dt-str (cond (= dt-n 1) "Sunday"
+                                                 (= dt-n 2) "Monday"
+                                                 (= dt-n 3) "Tuesday"
+                                                 (= dt-n 4) "Wednesady"
+                                                 (= dt-n 5) "Thurday"
+                                                 (= dt-n 6) "Friday"
+                                                 :else "Saturday")]
+                                (conj v dt-str)))
+                            (string-array [])
+                            (range :diff))}
+   [{:working-dates (explode :working-dates)}]
+   (group :working-dates {:weekday-count (count-a)})
+   show)

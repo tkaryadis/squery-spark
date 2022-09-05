@@ -4,10 +4,14 @@ Querying and data processing Clojure library, for Apache-Spark
 
 # Rationale
 
-SQL is a domain specific language, not a general programming language     
-Python/Scala/Java are general programming languages, but not domain specific languages      
+SQL is domain specific language for the relational model.     
+Its not a general programming language and not a functional programming language that
+we need for more general data processing with arrays/maps etc  
 
-Clojure can do both, in simple way, simpler than all alternatives.   
+Python/Scala are general programming languages but they are not domain specific languages,
+they are powerful but verbose as query languages.    
+
+Clojure can be both, in simple way, simpler than all alternatives.     
 
 **Clojure is used because**
 1. using Clojure macros, we can make a DSL   
@@ -23,7 +27,7 @@ This allows Clojure to be simpler and also more powerful from all alternatives J
 ## Design goals
 
 1. to have Clojure like syntax, and Clojure names,  
-   (see [cMQL](https://cmql.org/documentation/) the MongoDB query language that is based on Clojure syntax)
+   (see [SQuery](https://cmql.org/documentation/) the MongoDB query language that is based on Clojure syntax)
 2. use macro to use the Clojure operators inside the queries without the need for namespace qualified names
 3. be simple as compact and simple as possible
 4. be programmable, not code in strings like SQL

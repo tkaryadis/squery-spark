@@ -29,3 +29,19 @@
 (q emp
    {:running-total (wfield (sum :sal) (wsort :sal :empno))}
    show)
+
+;;8.3 working days between 2 dates
+(q t1
+   [{:date1 (date "2006-11-09" "yyyy-MM-dd")}
+    {:date2 (date "2006-12-09" "yyyy-MM-dd")}]
+   {:diff (days-diff :date2 :date1)}
+   {:working-dates  (reduce (fn [v t]
+                              (let [dt (add-days :date1 (int t))
+                                    dt-n (day-of-week dt)]
+                                (if- (and (not= dt-n 1) (not= dt-n 7))
+                                  (conj v dt)
+                                  v)))
+                            (date-array [])
+                            (range :diff))}
+   {:working-days-count (count :working-dates)}
+   (show false))
