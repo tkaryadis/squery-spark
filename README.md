@@ -4,11 +4,10 @@ Querying and data processing Clojure library, for Apache-Spark
 
 # Rationale
 
-SQL is domain specific language for the relational model.     
-Its not a general programming language and not a functional programming language that
-we need for more general data processing with arrays/maps etc  
+SQL is domain specific language for the relational model.       
+Its not a general programming language and not a functional programming language.  
 
-Python/Scala are general programming languages but they are not domain specific languages,
+Python/Java/Scala are general programming languages but they are not domain specific languages,
 they are powerful but verbose as query languages.    
 
 Clojure can be both, in simple way, simpler than all alternatives.     
@@ -61,6 +60,7 @@ df.withColumn("isExpensive", DOTCodeFilter.and(priceFilter.or(descripFilter)))
 ```
 
 Python
+
 ```
 DOTCodeFilter = col("StockCode") == "DOT"
 priceFilter = col("UnitPrice") > 600
@@ -71,6 +71,7 @@ df.withColumn("isExpensive", DOTCodeFilter & (priceFilter | descripFilter))\
 ```
 
 SQL
+
 ```
 SELECT UnitPrice, (StockCode = 'DOT' AND
 (UnitPrice > 600 OR instr(Description, "POSTAGE") >= 1)) as isExpensive

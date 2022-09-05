@@ -114,3 +114,13 @@
    [{:working-dates (explode :working-dates)}]
    (group :working-dates {:weekday-count (count-a)})
    show)
+
+;;7
+(q (as emp :e1)
+   (join (as emp :e2)
+         (and (not= :e1.ename :e2.ename)
+              (>= :e2.hiredate :e1.hiredate)))
+   (group :e1.ename :e1.hiredate {:next-hiredate (min [:e2.hiredate :e2.ename])})
+   {:days-diff (days-diff (get :next-hiredate 0) :e1.hiredate)}
+   (show false))
+
