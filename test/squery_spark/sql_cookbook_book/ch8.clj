@@ -28,6 +28,7 @@
 (def bonus1 (load-collection spark :cookbook.bonus1))
 (def bonus2 (load-collection spark :cookbook.bonus2))
 (def t1 (load-collection spark :cookbook.t1))
+(def nulls (load-collection spark :cookbook.nulls))
 
 ;;1
 (q emp
@@ -123,4 +124,31 @@
    (group :e1.ename :e1.hiredate {:next-hiredate (min [:e2.hiredate :e2.ename])})
    {:days-diff (days-diff (get :next-hiredate 0) :e1.hiredate)}
    (show false))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

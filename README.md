@@ -4,13 +4,17 @@ Querying and data processing Clojure library, for Apache-Spark
 
 # Rationale
 
-SQL is domain specific language for the relational model.       
-Its not a general programming language and not a functional programming language.  
+Data programs need
+- functional programming language for data processing
+- query language for tables
+- query language for json(or tables with arrays/maps)
+- a general programming language for everything else
+- all in 1 language to avoid complexity and different programming models
 
-Python/Java/Scala are general programming languages but they are not domain specific languages,
-they are powerful but verbose as query languages.    
+SQL is only good with tables without arrays/maps.  
+Python/Scala/Java can do all, but they are verbose as query languages.
 
-Clojure can be both, in simple way, simpler than all alternatives.     
+Clojure with a DSL like SQuery, can do all 4, simpler than all alternatives, and in 1 language.
 
 **Clojure is used because**
 1. using Clojure macros, we can make a DSL   
@@ -19,9 +23,8 @@ Clojure can be both, in simple way, simpler than all alternatives.
 3. runs on JVM like spark
 4. its dynamic simple and practical    
 5. its functional allowing natural data processing   
-6. its syntax provides support for nested pipelines(tree pipelines) not just vertical pipelines
-
-This allows Clojure to be simpler and also more powerful from all alternatives Java,Scala,Python,SQL. 
+6. its syntax provides support for nested pipelines(tree pipelines) not just vertical pipelines 
+   many people don't use clojure because of its tree syntax, but this is a feature for complex data processing
 
 ## Design goals
 

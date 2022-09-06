@@ -106,3 +106,8 @@
 (def t1-docs [{:_id 1}])
 (try (drop-collection :cookbook.t1) (catch Exception e ""))
 (insert :cookbook.t1 t1-docs)
+
+
+(def nulls [{:_id 1} {:_id nil} {:_id 2}])
+(try (drop-collection :cookbook.nulls) (catch Exception e ""))
+(insert :cookbook.nulls nulls)
