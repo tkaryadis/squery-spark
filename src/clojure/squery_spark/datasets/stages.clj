@@ -1,5 +1,5 @@
 (ns squery-spark.datasets.stages
-  (:refer-clojure :exclude [sort])
+  (:refer-clojure :exclude [sort distinct])
   (:require [clojure.core :as c]
             [squery-spark.datasets.internal.common :refer [columns column-keyword column single-maps]]
             [squery-spark.utils.utils :refer [string-map]])
@@ -144,7 +144,7 @@
           group)))))
 
 (defn select-distinct
-  ([df & cols] (.distinct ^Dataset (apply (partial select df) cols)))
+  ([df & cols] (.distinct ^Dataset (select df cols)))
   ([df] (.distinct ^Dataset df)))
 
 (defn count-s [df]

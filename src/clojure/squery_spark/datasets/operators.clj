@@ -1,5 +1,6 @@
 (ns squery-spark.datasets.operators
   (:refer-clojure :exclude [+ inc - dec * mod
+                            even? odd?
                             = not= > >= < <=
                             and or not
                             if-not cond
@@ -87,6 +88,14 @@
 (defn div [col1 col2]
   (.divide  (column col1) (column col2)))
 
+;;derived
+
+(defn even? [col]
+  (.equalTo (.mod (column col) (column 2)) 0))
+
+(defn odd? [col]
+  (.notEqual (.mod (column col) (column 2)) 0))
+
 
 ;;---------------------------Comparison-------------------------------------
 ;;--------------------------------------------------------------------------
@@ -115,6 +124,9 @@
 
 (defn <= [col1 col2]
   (.leq (column col1) (column col2)))
+
+(defn <> [col col1-left col2-right]
+  (.between (column col) (column col1-left) (column col2-right)))
 
 
 ;;---------------------------Boolean----------------------------------------
@@ -715,6 +727,7 @@
     >= squery-spark.datasets.operators/>=
     < squery-spark.datasets.operators/<
     <= squery-spark.datasets.operators/<=
+    <> squery-spark.datasets.operators/<>
     and squery-spark.datasets.operators/and
     or squery-spark.datasets.operators/or
     not squery-spark.datasets.operators/not
@@ -826,6 +839,8 @@
     sqrt squery-spark.datasets.operators/sqrt
     mod squery-spark.datasets.operators/mod
     div squery-spark.datasets.operators/div
+    odd? squery-spark.datasets.operators/odd?
+    even? squery-spark.datasets.operators/even?
     lit squery-spark.datasets.operators/lit
     cast squery-spark.datasets.operators/cast
     string squery-spark.datasets.operators/string
@@ -852,6 +867,7 @@
     agg squery-spark.datasets.stages/agg
     unset squery-spark.datasets.stages/unset
     count-s squery-spark.datasets.stages/count-s
+    select-distinct squery-spark.datasets.stages/select-distinct
     limit squery-spark.datasets.stages/limit
     join squery-spark.datasets.stages/join
     union-with squery-spark.datasets.stages/union-with

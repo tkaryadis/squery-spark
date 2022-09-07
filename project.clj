@@ -11,7 +11,8 @@
                  [org.apache.spark/spark-mllib_2.12 "3.3.0"]
 
                  ;;mongodb-connector 10.0.4 works only with scala 2.12
-                 [org.mongodb.spark/mongo-spark-connector "10.0.4" :exclusions [org.mongodb/mongodb-driver-sync]]
+                 [org.mongodb.spark/mongo-spark-connector "10.0.4"
+                  :exclusions [org.mongodb/mongodb-driver-sync]]
 
                  ;;query mongo with squery for mongo
                  [org.squery/squery-mongo-core "0.2.0-SNAPSHOT"]

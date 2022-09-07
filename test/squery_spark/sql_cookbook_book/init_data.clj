@@ -73,8 +73,7 @@
                 {:deptno 20 :dname "RESEARCH" :loc "DALLAS"  }
                 {:deptno 30 :dname "SALES" :loc "CHICAGO"  }
                 {:deptno 40 :dname "OPERATIONS" :loc "BOSTON"  }
-
-               ])
+])
 
 (try (drop-collection :cookbook.dept) (catch Exception e ""))
 (insert :cookbook.dept dept-docs)
@@ -111,3 +110,22 @@
 (def nulls [{:_id 1} {:_id nil} {:_id 2}])
 (try (drop-collection :cookbook.nulls) (catch Exception e ""))
 (insert :cookbook.nulls nulls)
+
+
+(def tests [
+        {:test1 20 :test2 20}
+        {:test1 150 :test2 25 }
+        {:test1 20 :test2 20}
+        {:test1 60 :test2 30}
+        {:test1 70 :test2 90}
+        {:test1 80 :test2 130}
+        {:test1 90 :test2 70}
+        {:test1 100 :test2 50}
+        {:test1 110 :test2 55}
+        {:test1 120 :test2 60}
+        {:test1 130 :test2 80}
+        {:test1 140 :test2 70}
+        ])
+
+(try (drop-collection :cookbook.tests) (catch Exception e ""))
+(insert :cookbook.tests tests)

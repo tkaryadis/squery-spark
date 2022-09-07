@@ -7,14 +7,14 @@ Querying and data processing Clojure library, for Apache-Spark
 Data programs need
 - functional programming language for data processing
 - query language for tables
-- query language for json(or tables with arrays/maps)
-- a general programming language for everything else
+- query language for documents(json or tables with arrays/maps)
+- general programming language for everything else
 - all in 1 language to avoid complexity and different programming models
-
-SQL is only good with tables without arrays/maps.  
+ 
+SQL is only good with tables, and we need at least 2 languages for data processing. 
 Python/Scala/Java can do all, but they are verbose as query languages.
 
-Clojure with a DSL like SQuery, can do all 4, simpler than all alternatives, and in 1 language.
+Clojure with a DSL like SQuery, can do all 4, simpler and in 1 language.
 
 **Clojure is used because**
 1. using Clojure macros, we can make a DSL   

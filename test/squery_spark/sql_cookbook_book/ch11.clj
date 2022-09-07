@@ -1,4 +1,4 @@
-(ns squery-spark.sql-cookbook-book.notes
+(ns squery-spark.sql-cookbook-book.ch11
   (:refer-clojure :only [])
   (:require [squery-spark.datasets.queries :refer :all]
             [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
@@ -11,9 +11,10 @@
             [squery-spark.mongo-connector.utils :refer [load-collection]])
   (:refer-clojure)
   (:require [clojure.core :as c])
-  (:import (org.apache.spark.sql functions Column RelationalGroupedDataset)
+  (:import (org.apache.spark.sql functions Column RelationalGroupedDataset Encoders)
            (org.apache.spark.sql.expressions Window WindowSpec)
-           (org.apache.spark.sql.types DataTypes ArrayType StructType)))
+           (org.apache.spark.sql.types DataTypes ArrayType StructType)
+           (accumulators ProductAcc)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -24,31 +25,57 @@
 (def bonus1 (load-collection spark :cookbook.bonus1))
 (def bonus2 (load-collection spark :cookbook.bonus2))
 (def t1 (load-collection spark :cookbook.t1))
+(def tests (load-collection spark :cookbook.tests))
 
-;;7.6 window function, sort and sum
-(q emp
-   {:running-total (wfield (sum :sal) (wsort :sal :empno))}
-   show)
-
-;;8.3 working days between 2 dates
-(q t1
-   [{:date1 (date "2006-11-09" "yyyy-MM-dd")}
-    {:date2 (date "2006-12-09" "yyyy-MM-dd")}]
-   {:diff (days-diff :date2 :date1)}
-   {:working-dates  (reduce (fn [v t]
-                              (let [dt (add-days :date1 (int t))
-                                    dt-n (day-of-week dt)]
-                                (if- (and (not= dt-n 1) (not= dt-n 7))
-                                  (conj v dt)
-                                  v)))
-                            (date-array [])
-                            (range :diff))}
-   {:working-days-count (count :working-dates)}
-   (show false))
-
-;;pagination
+;;1
 (q emp
    {:rn (wfield (row-number) (wsort :sal))}
    ((<> :rn 1 5))
    [:sal]
    show)
+
+;;2
+(q emp
+   {:rn (wfield (row-number) (wsort :ename))}
+   ((odd? :rn))
+   [:ename]
+   show)
+
+;;3
+(q (as emp :e)
+   ((or (= :deptno 10) (= :deptno 20)))
+   (join (as dept :d)
+         (= :e.deptno :d.deptno)
+         :right_outer)
+   (sort :d.deptno)
+   [:e.ename :d.deptno :d.dname :d.loc]
+   show)
+
+;;4
+(q tests
+   [{:array (sort-array [:test1 :test2])}]
+   (group :array {:count (count-a)})
+   ((= :count 2))
+   [{:test1 (get :array 0)} {:test2 (get :array 1)}]
+   show)
+
+;;4 alt self-join
+(q (as tests :t1)
+   (join (as tests :t2)
+         (and (= :t1.test1 :t2.test2)
+              (= :t1.test2 :t2.test1)
+              (<= :t1.test1 :t2.test1)))
+   (select-distinct :t1.test1 :t1.test2)
+   show)
+
+
+
+
+
+
+
+
+
+
+
+
