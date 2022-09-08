@@ -13,7 +13,7 @@
                             str subs re-find re-matcher re-seq replace identity
                             long-array])
   (:require [clojure.core :as c]
-            [squery-spark.datasets.internal.common :refer [column column columns]]
+            [squery-spark.datasets.internal.common :refer [column column columns sort-arguments]]
             [squery-spark.datasets.schema :refer [schema-types]]
             [squery-spark.utils.utils :refer [nested2 nested3]]
             [squery-spark.datasets.schema :refer [array-type]]
@@ -507,7 +507,7 @@
    (c/let [[wspec cols] (if (instance? WindowSpec (c/first args))
                         [(c/first args) (c/rest args)]
                         [nil args])
-         cols (columns cols)]
+         cols (sort-arguments cols)]
      (if (c/nil? wspec)
        (Window/orderBy (into-array Column cols))
        (.orderBy wspec (into-array Column cols))))))
@@ -527,6 +527,9 @@
 (defn window
   ([col duration] (functions/window (column col) duration))
   ([col duration slide] (functions/window (column col) duration slide)))
+
+(defn offset [col off-set]
+  (functions/lag (column col) (c/int off-set)))
 
 
 ;;---------------------------Strings----------------------------------------
@@ -820,6 +823,7 @@
     wrange squery-spark.datasets.operators/wrange
     wrows squery-spark.datasets.operators/wrows
     window squery-spark.datasets.operators/window
+    offset squery-spark.datasets.operators/offset
     first-a squery-spark.datasets.operators/first-a
     last squery-spark.datasets.operators/last
     count-distinct squery-spark.datasets.operators/count-distinct
@@ -886,6 +890,7 @@
     drop-na squery-spark.datasets.stages/drop-na
     fill-na squery-spark.datasets.stages/fill-na
     replace-na squery-spark.datasets.stages/replace-na
+    cartesian squery-spark.datasets.stages/cartesian
 
 
 

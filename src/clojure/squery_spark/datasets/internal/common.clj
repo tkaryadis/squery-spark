@@ -172,3 +172,25 @@
             (assoc new-m (name k) (column (get m k))))
           {}
           (keys m)))
+
+(defn sort-arguments [cols]
+  (mapv (fn [col]
+          (let [desc? (and (keyword? col) (clojure.string/starts-with? (name col) "!"))
+                nl?   (and (keyword? col) (clojure.string/ends-with? (name col) "!"))
+                col (if desc? (keyword (subs (name col) 1)) col)
+                col (if nl? (keyword (subs (name col) 0 (dec (count (name col))))) col)
+                col (column-keyword col)
+                col (cond
+                      (and desc? nl?)
+                      (.desc_nulls_last ^Column col)
+
+                      desc?
+                      (.desc ^Column col)
+
+                      nl?
+                      (.asc_nulls_last ^Column col)
+
+                      :else
+                      col)]
+            col))
+        cols))

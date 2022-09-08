@@ -26,6 +26,7 @@
 (def bonus2 (load-collection spark :cookbook.bonus2))
 (def t1 (load-collection spark :cookbook.t1))
 (def tests (load-collection spark :cookbook.tests))
+(def emp2 (load-collection spark :cookbook.emp2))
 
 ;;1
 (q emp
@@ -67,6 +68,66 @@
               (<= :t1.test1 :t2.test1)))
    (select-distinct :t1.test1 :t1.test2)
    show)
+
+;;5
+(q emp
+   {:rn (wfield (dense-rank) (wsort :!sal))}
+   ((< :rn 6))
+   show)
+
+;;6
+(q emp
+   {:lower-sal (wfield (min :sal))}
+   {:max-sal (wfield (max :sal))}
+   ((or (= :sal :lower-sal) (= :sal :max-sal)))
+   show)
+
+;;6 alt
+(q (as emp :e1)
+   (join (q (as emp :e2)
+            (group {:min-sal (min :sal)} {:max-sal (max :sal)}))
+         (or (= :e1.sal :max-sal) (= :e1.sal :min-sal)))
+   show)
+
+;;7
+(q emp2
+   {:next-sal (wfield (offset :salary 1) (wsort :!date))}
+   show)
+
+;;8
+(q emp
+   [:ename
+    :sal
+    {:rewind (coalesce (wfield (offset :sal -1) (wsort :sal))
+                       (wfield (min :sal)))}
+    {:forward (coalesce (wfield (offset :sal 1) (wsort :sal))
+                        (wfield (max :sal)))}]
+   show)
+
+
+;;9
+(q emp
+   [:sal {:rnk (wfield (dense-rank) (wsort :sal))}]
+   show)
+
+;;10
+(q emp
+   (select-distinct :job)
+   show)
+
+;;11
+(q (as emp :e1)
+   [:e1.deptno :e1.ename :e1.sal :e1.hiredate]
+   {:latest-sal (wfield (first-a :sal) (-> (wgroup :deptno)
+                                           (wsort :!hiredate)))}
+   (sort :deptno)
+   show)
+
+;;12 skipped
+
+
+
+
 
 
 

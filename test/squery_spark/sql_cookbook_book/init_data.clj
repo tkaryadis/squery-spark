@@ -129,3 +129,23 @@
 
 (try (drop-collection :cookbook.tests) (catch Exception e ""))
 (insert :cookbook.tests tests)
+
+(def emp2 [{"ename" "SMITH", "salary" 800, "date" "17-12-80"}
+           {"ename" "ALLEN", "salary" 1600, "date" "20-02-81"}
+           {"ename" "WARD", "salary" 1250, "date" "22-02-81"}
+           {"ename" "JONES", "salary" 2975, "date" "02-04-81"}
+           {"ename" "BLAKE", "salary" 2850, "date" "01-05-81"}
+           {"ename" "CLARK", "salary" 2450, "date" "09-06-81"}
+           {"ename" "TURNER", "salary" 1500, "date" "08-09-81"}
+           {"ename" "MARTIN", "salary" 1250, "date" "28-09-81"}
+           {"ename" "KING", "salary" 5000, "date" "17-11-81"}
+           {"ename" "JAMES", "salary" 950, "date" "03-12-81"}
+           {"ename" "FORD", "salary" 3000, "date" "03-12-81"}
+           {"ename" "MILLER", "salary" 1300, "date" "23-01-82"}
+           {"ename" "SCOTT", "salary" 3000, "date" "09-12-82"}
+           {"ename" "ADAMS", "salary" 1100, "date" "12-01-83"}])
+
+(try (drop-collection :cookbook.emp2) (catch Exception e ""))
+(insert :cookbook.emp2 emp2)
+(update- :cookbook.emp2 (uq {:date (date-from-string :date "%d-%m-%Y")}))
+

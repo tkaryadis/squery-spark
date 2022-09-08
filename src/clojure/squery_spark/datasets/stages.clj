@@ -1,7 +1,7 @@
 (ns squery-spark.datasets.stages
   (:refer-clojure :exclude [sort distinct])
   (:require [clojure.core :as c]
-            [squery-spark.datasets.internal.common :refer [columns column-keyword column single-maps]]
+            [squery-spark.datasets.internal.common :refer [columns column-keyword column single-maps sort-arguments]]
             [squery-spark.utils.utils :refer [string-map]])
   (:import (org.apache.spark.sql Dataset Column)
            [org.apache.spark.sql functions RelationalGroupedDataset DataFrameStatFunctions DataFrameNaFunctions]
@@ -65,26 +65,7 @@
 (defn sort
   "DataFrame orderBy"
   [df & cols]
-  (let [cols (mapv (fn [col]
-                     (let [desc? (and (keyword? col) (clojure.string/starts-with? (name col) "!"))
-                           nl?   (and (keyword? col) (clojure.string/ends-with? (name col) "!"))
-                           col (if desc? (keyword (subs (name col) 1)) col)
-                           col (if nl? (keyword (subs (name col) 0 (dec (count (name col))))) col)
-                           col (column-keyword col)
-                           col (cond
-                                 (and desc? nl?)
-                                 (.desc_nulls_last ^Column col)
-
-                                 desc?
-                                 (.desc ^Column col)
-
-                                 nl?
-                                 (.asc_nulls_last ^Column col)
-
-                                 :else
-                                 col)]
-                       col))
-                   cols)]
+  (let [cols (sort-arguments cols)]
     (.orderBy df (into-array Column cols))))
 
 (defn agg
@@ -173,6 +154,11 @@
    (.join df1 df2 (column join-condition)))
   ([df1 df2 join-condition join-type]
    (.join df1 df2 (column join-condition) (name join-type))))
+
+;public Dataset<Row> crossJoin(Dataset<?> right)
+
+(defn cartesian [df1 df2]
+  (.crossJoin df1 df2))
 
 (defn union-with
   "union based on order of columns in the schema, ignores column names"
