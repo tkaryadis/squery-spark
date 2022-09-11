@@ -24,7 +24,7 @@
                  ]
   ;;aot, main,gen-class, delete target, and run with leinengen (sources that use udf+rdd)
   :aot [
-        squery-spark.sql-cookbook-book.ch7
+        ;squery-spark.sql-cookbook-book.ch7
         ;squery-spark.udaf_test
         ;squery-spark.spark-definitive-book.ch13
         ;squery-spark.spark-definitive-book.ch12
@@ -34,7 +34,7 @@
   :plugins [[lein-codox "0.10.7"]]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
-  :main squery-spark.sql-cookbook-book.ch7
+  ;:main squery-spark.sql-cookbook-book.ch7
   ;squery-spark.udaf_test
   ;squery-spark.spark-definitive-book.ch13
   ;squery-spark.udf-test

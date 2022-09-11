@@ -149,3 +149,9 @@
 (insert :cookbook.emp2 emp2)
 (update- :cookbook.emp2 (uq {:date (date-from-string :date "%d-%m-%Y")}))
 
+(def cnt [{:deptno 10 :cnt 3}
+          {:deptno 20 :cnt 5}
+          {:deptno 30 :cnt 6}])
+
+(try (drop-collection :cookbook.cnt) (catch Exception e ""))
+(insert :cookbook.cnt cnt)
