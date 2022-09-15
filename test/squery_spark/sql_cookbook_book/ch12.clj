@@ -107,9 +107,76 @@
    (union-with (q cnt1 [{:deptno 30} {:counts :deptno_30}]))
    show)
 
-;;4 array way
+;;4 array way, safe even if lots of data
 (q emp
    ((= :deptno 10))
-   [{:emps (explode [:ename :job :sal nil])}]
+   [{:emps (explode [:ename :job :sal ""])}]
    show)
 
+;;5
+(q emp
+   {:rn (wfield (row-number) (-> (wsort :deptno) (wgroup :deptno)))}
+   [{:deptno (if- (= :rn 1) :deptno "")} :ename]
+   show)
+
+;;6
+(q emp
+   (group :deptno
+          {:sal (sum :sal)})
+   (group {:d20_10_diff (sum (cond
+                               (= :deptno 10) (- 0 :sal)
+                               (= :deptno 20) :sal
+                               :else 0))}
+          {:d20_30_diff (sum (cond
+                               (= :deptno 30) (- 0 :sal)
+                               (= :deptno 20) :sal
+                               :else 0))})
+   show)
+
+;;7 buckets of 5 size
+(q emp
+   {:rn (wfield (row-number) (wsort :empno))}
+   (group [:GRP (+ (long (div :rn 5)) 1)]
+          {:emps (conj-each [:empno :ename])})
+   {:emps (explode :emps)}
+   {:empno (first :emps)
+    :ename (second :emps)}
+   (unset :emps)
+   show)
+
+
+;;8 ,seperate in 4 buckets
+(q emp
+   {:rn (wfield (row-number) (wsort :empno))}
+   (group [:GRP (+ (long (mod :rn 4)) 1)] :empno
+          {:ename (first-a :ename)})
+   show)
+
+;;8 alt with ntile window function
+(q emp
+   [{:GRP (wfield (bucket-size 4) (wsort :empno))}
+    :empno
+    :ename]
+   show)
+
+
+;;9 (spark repeat needs known int not a column so cant be used)
+(q emp
+   (group :deptno
+          {:cnt (count-a)})
+   {:cnt (reduce (fn [v t] (str v "*")) "" (range :cnt))}
+   (sort :deptno)
+   show)
+
+;;10
+(q emp
+   {:rn (wfield (row-number) (-> (wsort :deptno) (wgroup :deptno)))}
+   (group :rn
+          {:deptno_10 (max (if- (= :deptno 10) "*" ""))}
+          {:deptno_20 (max (if- (= :deptno 20) "*" ""))}
+          {:deptno_30 (max (if- (= :deptno 30) "*" ""))})
+   (sort :!rn)
+   (unset :rn)
+   show)
+
+;;11

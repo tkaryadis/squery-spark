@@ -101,6 +101,7 @@
   (let [group-nil? (nil? (first cols-acc))
         cols-acc (if group-nil? (rest cols-acc) cols-acc)
         [cols acc]  [(filter #(not (map? %)) cols-acc) (filter #(map? %) cols-acc)]
+        cols (mapv #(if (vector? %) (.as  (column (second %)) (name (first %))) %) cols)
         acc-maps (single-maps (into [] acc))]
     (cond
       (empty? acc-maps)                                     ;;group only (group)=(group nil) (group field1 field2...)

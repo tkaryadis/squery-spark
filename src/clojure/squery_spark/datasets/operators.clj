@@ -11,7 +11,8 @@
                             fn map filter reduce
                             first second last merge max min
                             str subs re-find re-matcher re-seq replace identity
-                            long-array])
+                            long-array
+                            repeat])
   (:require [clojure.core :as c]
             [squery-spark.datasets.internal.common :refer [column column columns sort-arguments]]
             [squery-spark.datasets.schema :refer [schema-types]]
@@ -22,7 +23,6 @@
   (:import [org.apache.spark.sql functions Column Dataset]
            (org.apache.spark.sql.expressions Window WindowSpec)
            (scala Function1 Function2)))
-
 
 ;;Operators for columns
 
@@ -531,6 +531,11 @@
 (defn offset [col off-set]
   (functions/lag (column col) (c/int off-set)))
 
+(defn bucket-size
+  "seperate in buckets"
+  [n-rows]
+  (functions/ntile n-rows))
+
 
 ;;---------------------------Strings----------------------------------------
 ;;--------------------------------------------------------------------------
@@ -616,7 +621,8 @@
   [col string-match string-replacement]
   (functions/translate (column col) string-match string-replacement))
 
-
+(defn repeat [col ntimes]
+  (functions/repeat (column col) (c/int ntimes)))
 
 ;;--------------------------Dates-------------------------------------------
 
@@ -805,6 +811,7 @@
     padl squery-spark.datasets.operators/padl
     padr squery-spark.datasets.operators/padr
     translate squery-spark.datasets.operators/translate
+    repeat squery-spark.datasets.operators/repeat
 
     ;;accumulators
     sum squery-spark.datasets.operators/sum
@@ -824,6 +831,7 @@
     wrows squery-spark.datasets.operators/wrows
     window squery-spark.datasets.operators/window
     offset squery-spark.datasets.operators/offset
+    bucket-size squery-spark.datasets.operators/bucket-size
     first-a squery-spark.datasets.operators/first-a
     last squery-spark.datasets.operators/last
     count-distinct squery-spark.datasets.operators/count-distinct

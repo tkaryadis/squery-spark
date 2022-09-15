@@ -7,7 +7,7 @@ Querying and data processing Clojure library, for Apache-Spark
 Data programs need
 - functional programming language for data processing
 - query language for tables
-- query language for documents(json or tables with arrays/maps)
+- query language for nested data/arrays (json or tables with arrays/maps)  
 - general programming language for everything else
 - all in 1 language to avoid complexity and different programming models
  
