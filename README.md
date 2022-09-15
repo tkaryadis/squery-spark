@@ -11,8 +11,8 @@ Data programs need
 - general programming language for everything else
 - all in 1 language to avoid complexity and different programming models
  
-SQL is a DSL for tables
-Python/Java/Scala are verbose as query languages
+SQL is a DSL for tables, all others are missing or hard to use     
+Python/Java/Scala can do all but they are verbose as query languages  
 
 Clojure can be both a simple query language, and the same time a powerful functional
 programming language.
