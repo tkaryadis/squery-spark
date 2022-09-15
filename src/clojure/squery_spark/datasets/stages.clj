@@ -229,6 +229,7 @@
   (.na ^Dataset df))
 
 (defn drop-na
+  "how= all or any, any is the default"
   ([df] (.drop (.na ^Dataset df)))
   ([df string-how] (.drop  (.na df) string-how))
   ([df string-how cols] (.drop (.na df) string-how (into-array String (mapv #(.toString %) (columns cols))))))
@@ -240,12 +241,5 @@
   ([df value cols]
    (-> df .na (.fill value (into-array String (mapv #(.toString %) (columns cols)))))))
 
-;;replace(String col, java.util.Map<T,T> replacement)
-;Replaces values matching keys in replacement map with the corresponding values.
-
-
 (defn replace-na [df col map-replacements]
   (.replace (.na df) (.toString (column col)) (HashMap. (string-map map-replacements))))
-
-
-;;----------------------------------------

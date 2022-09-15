@@ -4,7 +4,7 @@
     <option name="buildSystemId" value="LEININGEN" />
     <option name="displayName" value="org.squery/squery-spark:0.1.0-SNAPSHOT" />
   </component>
-  <component name="NewModuleRootManager">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_11">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/classes" />
     <exclude-output />
@@ -20,7 +20,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Leiningen: cheshire:5.10.0" level="project" />
     <orderEntry type="library" name="Leiningen: clj-time:0.15.2" level="project" />
-    <orderEntry type="library" name="Leiningen: clj-tuple:0.2.2" level="project" />
     <orderEntry type="library" name="Leiningen: clojure-complete:0.2.5" level="project" />
     <orderEntry type="library" name="Leiningen: clojure-csv:2.0.2" level="project" />
     <orderEntry type="library" name="Leiningen: com.chuusai/shapeless_2.12:2.3.3" level="project" />
@@ -221,10 +220,8 @@
     <orderEntry type="library" name="Leiningen: org.xerial.snappy/snappy-java:1.1.8.4" level="project" />
     <orderEntry type="library" name="Leiningen: oro:2.0.8" level="project" />
     <orderEntry type="library" name="Leiningen: pl.edu.icm/JLargeArrays:1.5" level="project" />
-    <orderEntry type="library" name="Leiningen: potemkin:0.4.5" level="project" />
     <orderEntry type="library" name="Leiningen: primitive-math:0.1.6" level="project" />
     <orderEntry type="library" name="Leiningen: prismatic/schema:1.1.12" level="project" />
-    <orderEntry type="library" name="Leiningen: riddley:0.1.12" level="project" />
     <orderEntry type="library" name="Leiningen: tigris:0.1.2" level="project" />
     <orderEntry type="library" name="Leiningen: tupelo:20.08.27" level="project" />
   </component>

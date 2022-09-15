@@ -105,3 +105,56 @@
           {:deptno_30 (sum :deptno_30)})
    show)
 
+;;ch12 2 array way, general without knowing possible job types
+(q emp
+   [:job :ename]
+   (group)
+   (pivot :job)
+   (agg (conj-each :ename))
+   (show false))
+
+;;ch12 2 alt assuming only those jobs ANALYST CLERK MANAGER PRESIDENT SALESMAN
+;;group+row number, group is like tricky way to take more than one for the accumulator
+;;if diffrent row_number they belong to different gorups => i can take 1 from each group
+(q emp
+   [:job
+    :ename
+    {:rn (wfield (row-number) (-> (wgroup :job) (wsort :job)))}]
+   (group :rn
+          {:clerks (max (if- (= :job "CLERK") :ename nil))}
+          {:analysts (max (if- (= :job "ANALYST") :ename nil))}
+          {:managers (max (if- (= :job "MANAGER") :ename nil))}
+          {:presidents (max (if- (= :job "PRESIDENT") :ename nil))}
+          {:salesmen (max (if- (= :job "SALESMAN") :ename nil))})
+   show)
+
+;;ch12 2 alt assuming only those jobs ANALYST CLERK MANAGER PRESIDENT SALESMAN
+;; without group
+(q emp
+   [{:clerks (if- (= :job "CLERK") :ename nil)}]
+   {:rn (wfield (row-number) (wsort :clerks!))}
+   (as :e1)
+   (join (q emp
+            [{:analysts (if- (= :job "ANALYST") :ename nil)}]
+            {:rn (wfield (row-number) (wsort :analysts!))}
+            (as :e2))
+         (= :e1.rn :e2.rn))
+   (join (q emp
+            [{:managers (if- (= :job "MANAGER") :ename nil)}]
+            {:rn (wfield (row-number) (wsort :managers!))}
+            (as :e3))
+         (= :e1.rn :e3.rn))
+   (join (q emp
+            [{:presidents (if- (= :job "PRESIDENT") :ename nil)}]
+            {:rn (wfield (row-number) (wsort :presidents!))}
+            (as :e4))
+         (= :e1.rn :e4.rn))
+   (join (q emp
+            [{:salesmans (if- (= :job "SALESMAN") :ename nil)}]
+            {:rn (wfield (row-number) (wsort :salesmans!))}
+            (as :e5))
+         (= :e1.rn :e5.rn))
+   (unset :e1.rn :e2.rn :e3.rn :e4.rn :e5.rn)
+   (drop-na "all")
+   show)
+

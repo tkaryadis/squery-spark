@@ -11,16 +11,17 @@ Data programs need
 - general programming language for everything else
 - all in 1 language to avoid complexity and different programming models
  
-SQL is only good with tables, and we need at least 2 languages for data processing. 
-Python/Scala/Java can do all, but they are verbose as query languages.
+SQL is a DSL for tables
+Python/Java/Scala are verbose as query languages
 
-Clojure with a DSL like SQuery, can do all 4, simpler and in 1 language.
+Clojure can be both a simple query language, and the same time a powerful functional
+programming language.
 
 **Clojure is used because**
 1. using Clojure macros, we can make a DSL   
 2. its general programming language also
 3. DSL code and normal Clojure code can be combined 
-3. runs on JVM like spark
+3. made for the JVM, can use all Java libraries  
 4. its dynamic simple and practical    
 5. its functional allowing natural data processing   
 6. its syntax provides support for nested pipelines(tree pipelines) not just vertical pipelines 

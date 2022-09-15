@@ -155,3 +155,8 @@
 
 (try (drop-collection :cookbook.cnt) (catch Exception e ""))
 (insert :cookbook.cnt cnt)
+
+(def cnt1 [{:deptno_10 3 :deptno_20 5 :deptno_30 6}])
+
+(try (drop-collection :cookbook.cnt1) (catch Exception e ""))
+(insert :cookbook.cnt1 cnt1)

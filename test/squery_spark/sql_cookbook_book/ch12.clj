@@ -22,6 +22,7 @@
 (def bonus2 (load-collection spark :cookbook.bonus2))
 (def t1 (load-collection spark :cookbook.t1))
 (def cnt (load-collection spark :cookbook.cnt))
+(def cnt1 (load-collection spark :cookbook.cnt1))
 
 ;;ch12 1
 ;;pivot GENERAL without knowing the possible departments
@@ -51,20 +52,64 @@
    (group)
    (pivot :job)
    (agg (conj-each :ename))
-   show)
+   (show false))
 
 ;;2 alt assuming only those jobs ANALYST CLERK MANAGER PRESIDENT SALESMAN
-#_(q emp
-   [{:clerks (if- (= :job "CLERK") :ename nil)
-     :analysts (if- (= :job "ANALYST") :ename nil)
-     :managers (if- (= :job "MANAGER") :ename nil)
-     :presidents (if- (= :job "PRESIDENT") :ename nil)
-     :salesmen (if- (= :job "SALESMAN") :ename nil)}]
-   (sort )
+;;ch12 2 alt assuming only those jobs ANALYST CLERK MANAGER PRESIDENT SALESMAN
+;;group+row number, group is like tricky way to take more than one for the accumulator
+;;if diffrent row_number they belong to different gorups => i can take 1 from each group
+(q emp
+   [:job
+    :ename
+    {:rn (wfield (row-number) (-> (wgroup :job) (wsort :job)))}]
+    (group :rn
+           {:clerks (max (if- (= :job "CLERK") :ename nil))}
+           {:analysts (max (if- (= :job "ANALYST") :ename nil))}
+           {:managers (max (if- (= :job "MANAGER") :ename nil))}
+           {:presidents (max (if- (= :job "PRESIDENT") :ename nil))}
+           {:salesmen (max (if- (= :job "SALESMAN") :ename nil))})
+    show)
+
+;;2 alt assuming only those jobs ANALYST CLERK MANAGER PRESIDENT SALESMAN
+;; row-number without group
+(q emp
+   [{:clerks (if- (= :job "CLERK") :ename nil)}]
+   {:rn (wfield (row-number) (wsort :clerks!))}
+   (as :e1)
+   (join (q emp
+            [{:analysts (if- (= :job "ANALYST") :ename nil)}]
+            {:rn (wfield (row-number) (wsort :analysts!))}
+            (as :e2))
+         (= :e1.rn :e2.rn))
+   (join (q emp
+            [{:managers (if- (= :job "MANAGER") :ename nil)}]
+            {:rn (wfield (row-number) (wsort :managers!))}
+            (as :e3))
+         (= :e1.rn :e3.rn))
+   (join (q emp
+            [{:presidents (if- (= :job "PRESIDENT") :ename nil)}]
+            {:rn (wfield (row-number) (wsort :presidents!))}
+            (as :e4))
+         (= :e1.rn :e4.rn))
+   (join (q emp
+            [{:salesmans (if- (= :job "SALESMAN") :ename nil)}]
+            {:rn (wfield (row-number) (wsort :salesmans!))}
+            (as :e5))
+         (= :e1.rn :e5.rn))
+   (unset :e1.rn :e2.rn :e3.rn :e4.rn :e5.rn)
+   (drop-na "all")
    show)
 
-;;3
-(q t1
-   (unset :_id)
-   {:deptno_10 3 :deptno_20 5 :deptno_30 6}
+;;3 ?
+(q cnt1
+   [{:deptno 10} {:counts :deptno_10}]
+   (union-with (q cnt1 [{:deptno 20} {:counts :deptno_20}]))
+   (union-with (q cnt1 [{:deptno 30} {:counts :deptno_30}]))
    show)
+
+;;4 array way
+(q emp
+   ((= :deptno 10))
+   [{:emps (explode [:ename :job :sal nil])}]
+   show)
+
