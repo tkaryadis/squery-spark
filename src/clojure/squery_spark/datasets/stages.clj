@@ -125,6 +125,12 @@
           (.agg ^RelationalGroupedDataset group acc-first acc-rest)
           group)))))
 
+(defn cube [df & cols]
+  (.cube df (into-array Column (columns cols))))
+
+(defn rollup [df & cols]
+  (.rollup df (into-array Column (columns cols))))
+
 (defn select-distinct
   ([df & cols] (.distinct ^Dataset (select df cols)))
   ([df] (.distinct ^Dataset df)))
@@ -155,8 +161,6 @@
    (.join df1 df2 (column join-condition)))
   ([df1 df2 join-condition join-type]
    (.join df1 df2 (column join-condition) (name join-type))))
-
-;public Dataset<Row> crossJoin(Dataset<?> right)
 
 (defn cartesian [df1 df2]
   (.crossJoin df1 df2))

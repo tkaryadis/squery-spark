@@ -876,6 +876,8 @@
     ;;stages
     sort squery-spark.datasets.stages/sort
     group squery-spark.datasets.stages/group
+    rollup squery-spark.datasets.stages/rollup
+    cube squery-spark.datasets.stages/cube
     agg squery-spark.datasets.stages/agg
     unset squery-spark.datasets.stages/unset
     count-s squery-spark.datasets.stages/count-s

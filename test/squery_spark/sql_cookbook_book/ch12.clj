@@ -180,3 +180,49 @@
    show)
 
 ;;11
+(q emp
+   {:max-dept (wfield (max :sal) (wgroup :deptno))
+    :min-dept (wfield (min :sal) (wgroup :deptno))
+    :max-job (wfield (max :sal) (wgroup :job))
+    :min-job (wfield (min :sal) (wgroup :job))}
+   [:deptno :ename :job :sal
+    {:dept-status (cond (= :max-dept :sal) "max"
+                        (= :min-dept :sal) "min"
+                        :else "")}
+    {:job-status (cond  (= :max-job :sal) "max"
+                        (= :min-job :sal) "min"
+                        :else "")}]
+   ((or (not= :job-status "") (not= :dept-status "")))
+   (sort :deptno :job)
+   show)
+
+;;12 union way
+(q emp
+   (group :job
+          {:sal (sum :sal)})
+   (union-with (q emp
+                  (group {:sal (sum :sal)})
+                  [{:job "total"} :sal]))
+   show)
+
+;;12 rollup way
+(q emp
+   (rollup :job)
+   (agg {:sal (sum :sal)})
+   {:job (if- (some? :job) :job "total")}
+   show)
+
+;;13 cube multiple groupings
+;;union way would be big here because cube
+(q emp
+   (cube :deptno :job)
+   (agg {:sal (sum :sal)})
+   {:category (cond (and (nil? :deptno) (nil? :job)) "Total"
+                    (nil? :deptno) "total by job"
+                    (nil? :job) "total by deptno"
+                    :else "total by dept and job")}
+   (show false))
+
+;;14 TODO not finished, has 6 more
+(q emp
+   )
