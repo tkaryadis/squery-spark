@@ -92,7 +92,7 @@
 
 ;;28
 (q orders
-   {:max-date (wfield (max :OrderDate))}
+   {:max-date (window (max :OrderDate))}
    ((<= (days-diff :max-date :OrderDate) 365))
    (group :ShipCountry
           {:avg (avg :Freight)})

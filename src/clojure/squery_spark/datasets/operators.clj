@@ -425,7 +425,7 @@
 (defn min [col]
   (functions/min (column col)))
 
-(defn count-a
+(defn count-acc
   ([] (functions/count (lit 1)))
   ([col] (functions/count (column col))))
 
@@ -435,7 +435,7 @@
 (defn conj-set [col]
   (functions/collect_set ^Column (column col)))
 
-(defn first-a [col]
+(defn first-acc [col]
   (functions/first (column col)))
 
 (defn last [col]
@@ -453,27 +453,59 @@
   ([col percentage]
    (functions/percentile_approx (column col) (column percentage) (column 10000))))
 
-;;---------------------------windowField------------------------------------
+;;---------------------------window------------------------------------
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
-;;val windowSpec = Window
-;                  .partitionBy("CustomerId", "date")
-;                  .orderBy(col("Quantity").desc)
-;                  .rowsBetween(Window.unboundedPreceding, Window.currentRow)
-
-;;(.over (functions/rank) (.orderBy
-;                                         (Window/orderBy (into-array Column []))
-;                                         (into-array Column [(col :id)])))
-
-(defn wfield
+(defn window
   ([acc-fun window-spec] (.over (column acc-fun) window-spec))
   ([acc-fun] (.over (column acc-fun))))
 
-(defn wspec []
-  "Call example (add field here)
-     {'myfield'  (wfield (rank) (-> (wspec) (sort :price)))}"
-  (Window/partitionBy (into-array Column [])))
+;;---------------------------window-spec-------------------------------------
+
+(defn ws-group
+  ([& args]
+   (c/let [[wspec cols] (if (instance? WindowSpec (c/first args))
+                          [(c/first args) (c/rest args)]
+                          [nil args])
+           cols (columns cols)]
+     (if (c/nil? wspec)
+       (Window/partitionBy (into-array Column cols))
+       (.partitionBy wspec (into-array Column cols))))))
+
+(defn ws-sort
+  ([& args]
+   (c/let [[wspec cols] (if (instance? WindowSpec (c/first args))
+                          [(c/first args) (c/rest args)]
+                          [nil args])
+           cols (sort-arguments cols)]
+     (if (c/nil? wspec)
+       (Window/orderBy (into-array Column cols))
+       (.orderBy wspec (into-array Column cols))))))
+
+(defn ws-range
+  " Specify the window by the value, of the column
+    Instead of longs i can use those
+    Window.unboundedPreceding
+    Window.currentRow
+    Window.unboundedFollowing"
+  ([wspec start end]
+   (.rangeBetween wspec start end))
+  ([start end]
+   (Window/rangeBetween start end)))
+
+(defn ws-rows
+  "Specify the window by the number of rows
+   Instead of longs i can use those
+   Window.unboundedPreceding
+   Window.currentRow
+   Window.unboundedFollowing"
+  ([wspec start end]
+   (.rowsBetween wspec start end))
+  ([start end]
+   (Window/rowsBetween start end)))
+
+;;-----------------window accumulators------------------------------------
 
 (defn rank
   "same order = same number, but the counter
@@ -492,50 +524,21 @@
   []
   (functions/row_number))
 
-(defn wgroup
-  ([& args]
-   (c/let [[wspec cols] (if (instance? WindowSpec (c/first args))
-                        [(c/first args) (c/rest args)]
-                        [nil args])
-         cols (columns cols)]
-     (if (c/nil? wspec)
-       (Window/partitionBy (into-array Column cols))
-       (.partitionBy wspec (into-array Column cols))))))
-
-(defn wsort
-  ([& args]
-   (c/let [[wspec cols] (if (instance? WindowSpec (c/first args))
-                        [(c/first args) (c/rest args)]
-                        [nil args])
-         cols (sort-arguments cols)]
-     (if (c/nil? wspec)
-       (Window/orderBy (into-array Column cols))
-       (.orderBy wspec (into-array Column cols))))))
-
-(defn wrange
-  ([wspec start end]
-   (.rangeBetween wspec start end))
-  ([start end]
-   (Window/rangeBetween start end)))
-
-(defn wrows
-  ([wspec start end]
-   (.rowsBetween wspec start end))
-  ([start end]
-   (Window/rowsBetween start end)))
-
-(defn window
-  ([col duration] (functions/window (column col) duration))
-  ([col duration slide] (functions/window (column col) duration slide)))
-
-(defn offset [col off-set]
+(defn offset
+  "row=current_row+offset
+   offset can be negative also or i can use neg-offset func"
+  [col off-set]
   (functions/lag (column col) (c/int off-set)))
+
+(defn neg-offset
+  "like offset but other negative direction"
+  [col off-set]
+  (functions/lead (column col) (c/int off-set)))
 
 (defn bucket-size
   "seperate in buckets"
   [n-rows]
   (functions/ntile n-rows))
-
 
 ;;---------------------------Strings----------------------------------------
 ;;--------------------------------------------------------------------------
@@ -689,6 +692,14 @@
     (functions/add_months (column col-start) (c/int (c/* column-or-number 12)))
     (functions/add_months (column col-start) (column (* column-or-number 12)))))
 
+(defn duration
+  "not a window function, its for defining ranges, for example in group-by
+   e.g. 10 minutes, 1 second
+   org.apache.spark.unsafe.types.CalendarInterval for valid duration identifiers"
+  ([col duration-str] (functions/window (column col) duration-str))
+  ([col duration-str slide-str] (functions/window (column col) duration-str slide-str)))
+
+
 ;;-----------------------------Statistics-----------------------------------
 
 (defn corr
@@ -791,6 +802,7 @@
     add-months squery-spark.datasets.operators/add-months
     ;sub-months squery-spark.datasets.operators/sub-months
     add-years squery-spark.datasets.operators/add-years
+    duration squery-spark.datasets.operators/duration
     ;sub-years squery-spark.datasets.operators/sub-years
     months-diff squery-spark.datasets.operators/months-diff
     years-diff squery-spark.datasets.operators/years-diff
@@ -818,21 +830,23 @@
     avg squery-spark.datasets.operators/avg
     max squery-spark.datasets.operators/max
     min squery-spark.datasets.operators/min
-    count-a squery-spark.datasets.operators/count-a
+    count-acc squery-spark.datasets.operators/count-acc
+    first-acc squery-spark.datasets.operators/first-acc
     conj-each squery-spark.datasets.operators/conj-each
     conj-set  squery-spark.datasets.operators/conj-set
-    wfield squery-spark.datasets.operators/wfield
+
+    window squery-spark.datasets.operators/window
+    ws-group squery-spark.datasets.operators/ws-group
+    ws-sort squery-spark.datasets.operators/ws-sort
+    ws-range squery-spark.datasets.operators/ws-range
+    ws-rows squery-spark.datasets.operators/ws-rows
+
     rank  squery-spark.datasets.operators/rank
     dense-rank squery-spark.datasets.operators/dense-rank
     row-number squery-spark.datasets.operators/row-number
-    wgroup squery-spark.datasets.operators/wgroup
-    wsort squery-spark.datasets.operators/wsort
-    wrange squery-spark.datasets.operators/wrange
-    wrows squery-spark.datasets.operators/wrows
-    window squery-spark.datasets.operators/window
     offset squery-spark.datasets.operators/offset
+    neg-offset squery-spark.datasets.operators/neg-offset
     bucket-size squery-spark.datasets.operators/bucket-size
-    first-a squery-spark.datasets.operators/first-a
     last squery-spark.datasets.operators/last
     count-distinct squery-spark.datasets.operators/count-distinct
 

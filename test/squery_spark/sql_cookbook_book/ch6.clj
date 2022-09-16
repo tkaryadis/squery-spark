@@ -170,7 +170,7 @@
                       "data"))}]
    (group)
    (pivot (first (split-str :data "-")))
-   (agg (first-a (second (split-str :data "-"))))
+   (agg (first-acc (second (split-str :data "-"))))
    (show false))
 
 ;;16-17 skipped  soundex and some regex

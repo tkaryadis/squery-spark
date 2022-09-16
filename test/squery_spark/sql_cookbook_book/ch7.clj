@@ -57,20 +57,20 @@
 (q emp (group {:sum-sal (sum :sal)}) show)
 
 ;;4
-(q emp (group {:nemp (count-a)}) show)
+(q emp (group {:nemp (count-acc)}) show)
 ;;=
 (q emp (group {:nemp (sum 1)}) show)
 ;;=
 (prn (q emp (count-s)))
 
-(q emp (group :deptno {:nemp (count-a)}) show)
+(q emp (group :deptno {:nemp (count-acc)}) show)
 
 ;;5
-(q emp (group {:comm (count-a :comm)}) show)
+(q emp (group {:comm (count-acc :comm)}) show)
 
 ;;6
 (q emp
-   {:running-total (wfield (sum :sal) (wsort :sal :empno))}
+   {:running-total (window (sum :sal) (ws-sort :sal :empno))}
    show)
 
 
@@ -80,7 +80,7 @@
 
 #_(q emp
    ((= :deptno 10))
-   {:running-prod (wfield (mul-acc :sal) (wsort :sal :empno))}
+   {:running-prod (window (mul-acc :sal) (ws-sort :sal :empno))}
    show)
 
 ;;8 skipped
@@ -89,7 +89,7 @@
 (q emp
    ((= :deptno 20))
    (group :sal
-          {:count (count-a)})
+          {:count (count-acc)})
    (sort :!count)
    (limit 1)
    [:sal]
@@ -120,8 +120,8 @@
 
 ;;13
 (q emp
-   {:min (wfield (min :sal))
-    :max (wfield (max :sal))}
+   {:min (window (min :sal))
+    :max (window (max :sal))}
    ((not= :sal :min) (not= :sal :max))
    (group {:avg (avg :sal)})
    show)

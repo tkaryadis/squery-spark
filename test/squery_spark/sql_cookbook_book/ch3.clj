@@ -76,15 +76,15 @@
 (q emp
    ((not= :deptno 10))
    (union-all-with (q emp ((= :ename "WARD"))))
-   {:row-number (wfield (row-number) (-> (wgroup :empno) (wsort :empno)))}
+   {:row-number (window (row-number) (-> (ws-group :empno) (ws-sort :empno)))}
    show)
 
 ;;7 keeping duplicates in set operations, using 1 extra column with the row number inside the group (to make them distinct)
 (q emp
    ((not= :deptno 10))
    (union-all-with (q emp ((= :ename "WARD"))))
-   {:row-number (wfield (row-number) (-> (wgroup :empno) (wsort :empno)))}
-   (difference-with (q emp {:row-number (wfield (row-number) (-> (wgroup :empno) (wsort :empno)))}))
+   {:row-number (window (row-number) (-> (ws-group :empno) (ws-sort :empno)))}
+   (difference-with (q emp {:row-number (window (row-number) (-> (ws-group :empno) (ws-sort :empno)))}))
    (unset :row-number)
    (union-with (q emp ((= :deptno 10))))
    show)
@@ -105,7 +105,7 @@
          (= :e.empno :b.empno)
          :left_outer)
    (group nil
-          {:deptno (first-a :deptno)}
+          {:deptno (first-acc :deptno)}
           {:total-sal (sum :sal)}
           {:total-bonus (sum (* :sal :bonus-perc))})
    show)
@@ -120,7 +120,7 @@
          (= :e.empno :b.empno)
          :left_outer)
    (group nil
-          {:deptno (first-a :deptno)}
+          {:deptno (first-acc :deptno)}
           {:total-sal (sum :sal)}
           {:total-bonus (sum (* :sal :bonus-perc))})
    show)

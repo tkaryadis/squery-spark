@@ -150,7 +150,7 @@
 
 ;;43
 (q orders
-   {:totalOrders (wfield (sum 1) (wgroup :EmployeeID))}
+   {:totalOrders (window (sum 1) (ws-group :EmployeeID))}
    ((>= :ShippedDate :RequiredDate ))
    [:EmployeeID :totalOrders]
    (join-eq employees :EmployeeID)
@@ -162,7 +162,7 @@
 
 ;;44 ;;45
 (q orders
-   {:totalOrders (wfield (sum 1) (wgroup :EmployeeID))}
+   {:totalOrders (window (sum 1) (ws-group :EmployeeID))}
    (join-eq employees :EmployeeID)
    (group :EmployeeID :LastName
           {:totalLateOrders (sum (if- (>= :ShippedDate :RequiredDate )
@@ -174,7 +174,7 @@
 
 ;;46 47
 (q orders
-   {:totalOrders (wfield (sum 1) (wgroup :EmployeeID))}
+   {:totalOrders (window (sum 1) (ws-group :EmployeeID))}
    (join-eq employees :EmployeeID)
    (group :EmployeeID :LastName
           {:totalLateOrders (sum (if- (>= :ShippedDate :RequiredDate )
@@ -219,7 +219,7 @@
                        (if- (> :TotalOrderAmount 1000)
                          "Medium"
                          "Low")))
-    :Total (wfield (sum 1))}
+    :Total (window (sum 1))}
    (group :CustomerGroup
           {:TotalInGroup (sum 1)}
           {:Total (first :Total)})

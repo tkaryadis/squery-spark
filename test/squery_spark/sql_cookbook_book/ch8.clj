@@ -113,7 +113,7 @@
                             (string-array [])
                             (range :diff))}
    [{:working-dates (explode :working-dates)}]
-   (group :working-dates {:weekday-count (count-a)})
+   (group :working-dates {:weekday-count (count-acc)})
    show)
 
 ;;7

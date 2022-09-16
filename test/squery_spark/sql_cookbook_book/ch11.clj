@@ -13,8 +13,7 @@
   (:require [clojure.core :as c])
   (:import (org.apache.spark.sql functions Column RelationalGroupedDataset Encoders)
            (org.apache.spark.sql.expressions Window WindowSpec)
-           (org.apache.spark.sql.types DataTypes ArrayType StructType)
-           (accumulators ProductAcc)))
+           (org.apache.spark.sql.types DataTypes ArrayType StructType)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -30,14 +29,14 @@
 
 ;;1
 (q emp
-   {:rn (wfield (row-number) (wsort :sal))}
+   {:rn (window (row-number) (ws-sort :sal))}
    ((<> :rn 1 5))
    [:sal]
    show)
 
 ;;2
 (q emp
-   {:rn (wfield (row-number) (wsort :ename))}
+   {:rn (window (row-number) (ws-sort :ename))}
    ((odd? :rn))
    [:ename]
    show)
@@ -55,7 +54,7 @@
 ;;4
 (q tests
    [{:array (sort-array [:test1 :test2])}]
-   (group :array {:count (count-a)})
+   (group :array {:count (count-acc)})
    ((= :count 2))
    [{:test1 (get :array 0)} {:test2 (get :array 1)}]
    show)
@@ -71,14 +70,14 @@
 
 ;;5
 (q emp
-   {:rn (wfield (dense-rank) (wsort :!sal))}
+   {:rn (window (dense-rank) (ws-sort :!sal))}
    ((< :rn 6))
    show)
 
 ;;6
 (q emp
-   {:lower-sal (wfield (min :sal))}
-   {:max-sal (wfield (max :sal))}
+   {:lower-sal (window (min :sal))}
+   {:max-sal (window (max :sal))}
    ((or (= :sal :lower-sal) (= :sal :max-sal)))
    show)
 
@@ -91,23 +90,23 @@
 
 ;;7
 (q emp2
-   {:next-sal (wfield (offset :salary 1) (wsort :!date))}
+   {:next-sal (window (offset :salary 1) (ws-sort :!date))}
    show)
 
 ;;8
 (q emp
    [:ename
     :sal
-    {:rewind (coalesce (wfield (offset :sal -1) (wsort :sal))
-                       (wfield (min :sal)))}
-    {:forward (coalesce (wfield (offset :sal 1) (wsort :sal))
-                        (wfield (max :sal)))}]
+    {:rewind (coalesce (window (offset :sal -1) (ws-sort :sal))
+                       (window (min :sal)))}
+    {:forward (coalesce (window (offset :sal 1) (ws-sort :sal))
+                        (window (max :sal)))}]
    show)
 
 
 ;;9
 (q emp
-   [:sal {:rnk (wfield (dense-rank) (wsort :sal))}]
+   [:sal {:rnk (window (dense-rank) (ws-sort :sal))}]
    show)
 
 ;;10
@@ -118,8 +117,8 @@
 ;;11
 (q (as emp :e1)
    [:e1.deptno :e1.ename :e1.sal :e1.hiredate]
-   {:latest-sal (wfield (first-a :sal) (-> (wgroup :deptno)
-                                           (wsort :!hiredate)))}
+   {:latest-sal (window (first-acc :sal) (-> (ws-group :deptno)
+                                           (ws-sort :!hiredate)))}
    (sort :deptno)
    show)
 

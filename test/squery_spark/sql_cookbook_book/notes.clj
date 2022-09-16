@@ -29,8 +29,8 @@
 ;;2 ways to do self-subquery
 ;;6 ch11
 (q emp
-   {:lower-sal (wfield (min :sal))}
-   {:max-sal (wfield (max :sal))}
+   {:lower-sal (window (min :sal))}
+   {:max-sal (window (max :sal))}
    ((or (= :sal :lower-sal) (= :sal :max-sal)))
    show)
 
@@ -43,7 +43,7 @@
 
 ;;7.6 window function, sort and sum cookbook
 (q emp
-   {:running-total (wfield (sum :sal) (wsort :sal :empno))}
+   {:running-total (window (sum :sal) (ws-sort :sal :empno))}
    show)
 
 ;;8.3 working days between 2 dates cookbook
@@ -64,7 +64,7 @@
 
 ;;pagination ch8 cookbook
 (q emp
-   {:rn (wfield (row-number) (wsort :sal))}
+   {:rn (window (row-number) (ws-sort :sal))}
    ((<> :rn 1 5))
    [:sal]
    show)
@@ -72,14 +72,14 @@
 
 ;;7 ch11, cookbook window function take the row in window after the offset
 (q emp2
-   {:next-sal (wfield (offset :salary 1) (wsort :!date))}
+   {:next-sal (window (offset :salary 1) (ws-sort :!date))}
    show)
 
 ;;11 ch11 cookbook
 (q (as emp :e1)
    [:e1.deptno :e1.ename :e1.sal :e1.hiredate]
-   {:latest-sal (wfield (first-a :sal) (-> (wgroup :deptno)
-                                           (wsort :!hiredate)))}
+   {:latest-sal (window (first-acc :sal) (-> (ws-group :deptno)
+                                           (ws-sort :!hiredate)))}
    (sort :deptno)
    show)
 

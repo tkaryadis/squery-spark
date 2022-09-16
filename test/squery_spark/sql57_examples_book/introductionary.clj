@@ -126,7 +126,7 @@
 ;;14 alter
 (q customers
    (group nil
-          {:TotalCustomers (count-a :CustomerID)})
+          {:TotalCustomers (count-acc :CustomerID)})
    .show)
 
 ;;15
@@ -145,7 +145,7 @@
 ;;17
 (q customers
    (group :ContactTitle
-          {:sum (count-a)})
+          {:sum (count-acc)})
    (sort :!sum)
    .show)
 

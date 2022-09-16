@@ -10,7 +10,8 @@
             [squery-spark.datasets.udf :refer :all]
             [squery-spark.mongo-connector.utils :refer [load-collection]])
   (:refer-clojure)
-  (:require [clojure.core :as c]))
+  (:require [clojure.core :as c])
+  (:import (org.apache.spark.sql.expressions Window)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -31,7 +32,7 @@
    {:deptno (str "deptno_" :deptno)}
    (group)
    (pivot :deptno)
-   (agg (first-a :cnt))
+   (agg (first-acc :cnt))
    show)
 
 ;;ch12 1 manual alt
@@ -61,7 +62,7 @@
 (q emp
    [:job
     :ename
-    {:rn (wfield (row-number) (-> (wgroup :job) (wsort :job)))}]
+    {:rn (window (row-number) (-> (ws-group :job) (ws-sort :job)))}]
     (group :rn
            {:clerks (max (if- (= :job "CLERK") :ename nil))}
            {:analysts (max (if- (= :job "ANALYST") :ename nil))}
@@ -74,26 +75,26 @@
 ;; row-number without group
 (q emp
    [{:clerks (if- (= :job "CLERK") :ename nil)}]
-   {:rn (wfield (row-number) (wsort :clerks!))}
+   {:rn (window (row-number) (ws-sort :clerks!))}
    (as :e1)
    (join (q emp
             [{:analysts (if- (= :job "ANALYST") :ename nil)}]
-            {:rn (wfield (row-number) (wsort :analysts!))}
+            {:rn (window (row-number) (ws-sort :analysts!))}
             (as :e2))
          (= :e1.rn :e2.rn))
    (join (q emp
             [{:managers (if- (= :job "MANAGER") :ename nil)}]
-            {:rn (wfield (row-number) (wsort :managers!))}
+            {:rn (window (row-number) (ws-sort :managers!))}
             (as :e3))
          (= :e1.rn :e3.rn))
    (join (q emp
             [{:presidents (if- (= :job "PRESIDENT") :ename nil)}]
-            {:rn (wfield (row-number) (wsort :presidents!))}
+            {:rn (window (row-number) (ws-sort :presidents!))}
             (as :e4))
          (= :e1.rn :e4.rn))
    (join (q emp
             [{:salesmans (if- (= :job "SALESMAN") :ename nil)}]
-            {:rn (wfield (row-number) (wsort :salesmans!))}
+            {:rn (window (row-number) (ws-sort :salesmans!))}
             (as :e5))
          (= :e1.rn :e5.rn))
    (unset :e1.rn :e2.rn :e3.rn :e4.rn :e5.rn)
@@ -115,7 +116,7 @@
 
 ;;5
 (q emp
-   {:rn (wfield (row-number) (-> (wsort :deptno) (wgroup :deptno)))}
+   {:rn (window (row-number) (-> (ws-sort :deptno) (ws-group :deptno)))}
    [{:deptno (if- (= :rn 1) :deptno "")} :ename]
    show)
 
@@ -135,7 +136,7 @@
 
 ;;7 buckets of 5 size
 (q emp
-   {:rn (wfield (row-number) (wsort :empno))}
+   {:rn (window (row-number) (ws-sort :empno))}
    (group [:GRP (+ (long (div :rn 5)) 1)]
           {:emps (conj-each [:empno :ename])})
    {:emps (explode :emps)}
@@ -147,14 +148,14 @@
 
 ;;8 ,seperate in 4 buckets
 (q emp
-   {:rn (wfield (row-number) (wsort :empno))}
+   {:rn (window (row-number) (ws-sort :empno))}
    (group [:GRP (+ (long (mod :rn 4)) 1)] :empno
-          {:ename (first-a :ename)})
+          {:ename (first-acc :ename)})
    show)
 
 ;;8 alt with ntile window function
 (q emp
-   [{:GRP (wfield (bucket-size 4) (wsort :empno))}
+   [{:GRP (window (bucket-size 4) (ws-sort :empno))}
     :empno
     :ename]
    show)
@@ -163,14 +164,14 @@
 ;;9 (spark repeat needs known int not a column so cant be used)
 (q emp
    (group :deptno
-          {:cnt (count-a)})
+          {:cnt (count-acc)})
    {:cnt (reduce (fn [v t] (str v "*")) "" (range :cnt))}
    (sort :deptno)
    show)
 
 ;;10
 (q emp
-   {:rn (wfield (row-number) (-> (wsort :deptno) (wgroup :deptno)))}
+   {:rn (window (row-number) (-> (ws-sort :deptno) (ws-group :deptno)))}
    (group :rn
           {:deptno_10 (max (if- (= :deptno 10) "*" ""))}
           {:deptno_20 (max (if- (= :deptno 20) "*" ""))}
@@ -181,10 +182,10 @@
 
 ;;11
 (q emp
-   {:max-dept (wfield (max :sal) (wgroup :deptno))
-    :min-dept (wfield (min :sal) (wgroup :deptno))
-    :max-job (wfield (max :sal) (wgroup :job))
-    :min-job (wfield (min :sal) (wgroup :job))}
+   {:max-dept (window (max :sal) (ws-group :deptno))
+    :min-dept (window (min :sal) (ws-group :deptno))
+    :max-job (window (max :sal) (ws-group :job))
+    :min-job (window (min :sal) (ws-group :job))}
    [:deptno :ename :job :sal
     {:dept-status (cond (= :max-dept :sal) "max"
                         (= :min-dept :sal) "min"
@@ -223,6 +224,29 @@
                     :else "total by dept and job")}
    (show false))
 
-;;14 TODO not finished, has 6 more
+;;14
 (q emp
-   )
+   (cube :deptno :job)
+   (agg {:sal (sum :sal)})
+   {:dept-job (cond (and (nil? :deptno) (nil? :job)) [1 1]
+                    (nil? :deptno) [1 0]
+                    (nil? :job) [0 1]
+                    :else [0 0])}
+   (show false))
+
+;;15 skipped simple cond with many cases
+;;16 skipped simple cond with many cases
+;;17 skipped bucket
+
+;;18
+(q emp
+   {:deptno-cnt (window (count-acc) (ws-group :deptno))
+    :job-cnt (window (count-acc) (ws-group :job))
+    :total (window (count-acc))}
+   show)
+
+;;19
+#_(q emp
+   {:spending (window (first-acc :hiredate))}
+   [:hiredate :sal :spending]
+   show)
