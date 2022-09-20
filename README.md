@@ -23,8 +23,7 @@ a query DSL that can be simple to use, and all in 1 language.
 3. made for the JVM, can use all Java libraries  
 4. its dynamic simple and practical    
 5. its functional allowing natural data processing   
-6. its syntax provides support for nested pipelines(tree pipelines) not just vertical pipelines 
-   many people don't use clojure because of its tree syntax, but this is a feature for complex data processing
+6. its syntax provides support for nested pipelines(tree pipelines) not just vertical pipelines
 
 ## Design goals
 
