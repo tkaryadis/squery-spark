@@ -537,8 +537,8 @@
 
 (defn bucket-size
   "seperate in buckets"
-  [n-rows]
-  (functions/ntile n-rows))
+  [bucket-nrows-int]
+  (functions/ntile (c/int bucket-nrows-int)))
 
 ;;---------------------------Strings----------------------------------------
 ;;--------------------------------------------------------------------------

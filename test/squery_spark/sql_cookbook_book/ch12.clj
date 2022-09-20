@@ -11,7 +11,8 @@
             [squery-spark.mongo-connector.utils :refer [load-collection]])
   (:refer-clojure)
   (:require [clojure.core :as c])
-  (:import (org.apache.spark.sql.expressions Window)))
+  (:import (org.apache.spark.sql.expressions Window)
+           (org.apache.spark.sql functions Column RelationalGroupedDataset)))
 
 (def spark (get-spark-session))
 (.setLogLevel (get-spark-context spark) "ERROR")
@@ -24,6 +25,7 @@
 (def t1 (load-collection spark :cookbook.t1))
 (def cnt (load-collection spark :cookbook.cnt))
 (def cnt1 (load-collection spark :cookbook.cnt1))
+
 
 ;;ch12 1
 ;;pivot GENERAL without knowing the possible departments
@@ -245,8 +247,6 @@
     :total (window (count-acc))}
    show)
 
-;;19
-#_(q emp
-   {:spending (window (first-acc :hiredate))}
-   [:hiredate :sal :spending]
-   show)
+;;19,20  TODO
+
+

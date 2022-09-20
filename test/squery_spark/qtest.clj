@@ -3,7 +3,8 @@
   (:require [squery-spark.datasets.queries :refer :all]
             [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
             [squery-spark.datasets.stages :refer :all]
-            [squery-spark.datasets.operators :refer :all])
+            [squery-spark.datasets.operators :refer :all]
+            [squery-spark.datasets.utils :refer :all])
   (:refer-clojure)
   (:import (org.apache.spark.sql Dataset RelationalGroupedDataset Column)
            (java.util HashMap)))
@@ -32,32 +33,32 @@
 
 (-> df
     (.select (into-array [(col "CustomerID") (.as (col "CustomerID") "customer") (.as (lit 20) "Customerlit" ) (lit 20)]))
-    .show)
+    show)
 
 
 
 (-> df
     (select [:CustomerID {:customer :CustomerID} {:customerlit 5} 20])
     ;(.count)
-    .show)
+    show)
 
 (q df
    [:CustomerID {:customer :CustomerID} {:customerlit (lit 5)} (lit 20)]
    ;(.count)
-   .show)
+   show)
 
 ;;;----------------Add columns----------------------------------------------------
 (-> df
     (.withColumns (HashMap. {"a" (lit 100) "b" (col "StockCode")}))
-    .show)
+    show)
 
 (-> df
     (add-columns {:a (lit 100)})
-    .show)
+    show)
 
 (q df
    {:a (lit 100) :b :StockCode}
-   .show)
+   show)
 
 ;;----------------filter------------------------------------------------------------
 
@@ -65,11 +66,11 @@
 (-> df
     (.filter ^Dataset (.and (.equalTo (col "InvoiceNo") 536365)
                             (.equalTo (col "Quantity") 6)))
-    .show)
+    show)
 
 (q df
    (filter-columns [(= :InvoiceNo 536365) (= :Quantity 6)])
-   .show)
+   show)
 
 (q df
    ((= :InvoiceNo 536365) (= :Quantity 6)))
@@ -81,25 +82,25 @@
    ((= :InvoiceNo 536365) (= :Quantity 6))
    {:afield "hello"}
    (unset :afield)
-   .show)
+   show)
 
 ;;------------sort--------------------------------------------------------------------
 
 (q df
    (sort :InvoiceNo)
-   .show)
+   show)
 
 ;;---------groupby--------------------------------------------------------------------
 
 (q df
    (.groupBy (into-array Column [(col "InvoiceNo")]))
    (.sum (into-array String ["UnitPrice"]))
-   .show)
+   show)
 
 (q df
    (group :InvoiceNo
           {:sum (sum :UnitPrice)})
-   .show)
+   show)
 
 ;;many accumulators
 (q df
@@ -107,7 +108,7 @@
           {:sum (sum :UnitPrice)
            :avg (avg :UnitPrice)})
    [:sum]
-   .show)
+   show)
 
 
 
@@ -121,17 +122,4 @@
           {:sum (sum :UnitPrice)}
           {:avg (avg :UnitPrice)})
    [{:sumavg (div :sum :avg)}]
-   .show)
-
-
-;;the above with java interop
-#_(q df
-     (.filter (.and (.gt (col "InvoiceNo") 536365)
-                    (.gt (col "Quantity") 6)))
-     (.withColumns (HashMap. {"afield" (lit "hello")}))
-     (.drop (col "afield"))
-     (.group (into-array Column [(col "InvoiceNo")]))
-     (.agg (.as (sum "UnitPrice") "sum")
-           (.as (avg "UnitPrice") "avg"))
-     (.select (into-array [(div (col "sum") (col "avg"))]))
-     (.show))
+   show)
