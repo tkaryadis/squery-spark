@@ -528,12 +528,12 @@
   "row=current_row+offset
    offset can be negative also or i can use neg-offset func"
   [col off-set]
-  (functions/lag (column col) (c/int off-set)))
+  (functions/lead (column col) (c/int off-set)))
 
 (defn neg-offset
   "like offset but other negative direction"
   [col off-set]
-  (functions/lead (column col) (c/int off-set)))
+  (functions/lag (column col) (c/int off-set)))
 
 (defn bucket-size
   "seperate in buckets"

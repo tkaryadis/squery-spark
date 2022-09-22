@@ -160,3 +160,26 @@
 
 (try (drop-collection :cookbook.cnt1) (catch Exception e ""))
 (insert :cookbook.cnt1 cnt1)
+
+
+(def range1 [{:proj-id 1 :proj-start "01-01-2020" :proj-end "02-01-2020" }
+             {:proj-id 2 :proj-start "02-01-2020" :proj-end "03-01-2020" }
+             {:proj-id 3 :proj-start "03-01-2020" :proj-end "04-01-2020" }
+             {:proj-id 4 :proj-start "04-01-2020" :proj-end "05-01-2020" }
+             {:proj-id 5 :proj-start "06-01-2020" :proj-end "07-01-2020" }
+             {:proj-id 6 :proj-start "16-01-2020" :proj-end "17-01-2020" }
+             {:proj-id 7 :proj-start "17-01-2020" :proj-end "18-01-2020" }
+             {:proj-id 8 :proj-start "18-01-2020" :proj-end  "19-01-2020"}
+             {:proj-id 9 :proj-start "19-01-2020" :proj-end "20-01-2020" }
+             {:proj-id 10 :proj-start "21-01-2020" :proj-end "22-01-2020" }
+             {:proj-id 11 :proj-start "26-01-2020" :proj-end "27-01-2020" }
+             {:proj-id 12 :proj-start "27-01-2020" :proj-end "28-01-2020" }
+             {:proj-id 13 :proj-start "28-01-2020" :proj-end "29-01-2020" }
+             {:proj-id 14 :proj-start "29-01-2020" :proj-end "30-01-2020" }
+             ])
+
+(try (drop-collection :cookbook.range1) (catch Exception e ""))
+(insert :cookbook.range1 range1)
+(update- :cookbook.range1 (uq {:proj-start (date-from-string :proj-start "%d-%m-%Y")
+                               :proj-end (date-from-string :proj-end "%d-%m-%Y")}))
+
