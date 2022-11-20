@@ -1,7 +1,6 @@
 (ns squery-spark.spark-definitive-book.ch12
   (:refer-clojure :only [])
   (:require [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
-            [squery-spark.state.connection :refer [get-spark-session get-spark-context]]
             [squery-spark.datasets.utils :refer [seq->rdd rdd->df show]]
             [squery-spark.datasets.schema :refer [todf]]
             [squery-spark.datasets.rows :refer [row]]

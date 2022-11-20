@@ -19,6 +19,7 @@
             [squery-spark.utils.utils :refer [nested2 nested3]]
             [squery-spark.datasets.schema :refer [array-type]]
             [squery-spark.datasets.internal.common :refer [column columns]]
+            [squery-spark.datasets.schema :refer [build-schema]]
             [erp12.fijit.collection :refer [to-scala-seq to-scala-list]])
   (:import [org.apache.spark.sql functions Column Dataset]
            (org.apache.spark.sql.expressions Window WindowSpec)
@@ -260,6 +261,9 @@
 
 (defn array [& cols]
   (functions/array (into-array Column (columns cols))))
+
+(defn json [col builded-schema]
+  (functions/from_json (column col) builded-schema))
 
 ;;---------------------Structs----------------------------------------------
 
@@ -706,8 +710,6 @@
   ([df-functions col1 col2] (.corr df-functions (.toString (column col1)) (.toString (column col2))))
   ([col1 col2] (functions/corr (column col1) (column col2))))
 
-
-
 ;;--------------------------------------------------------------------------
 (defn desc [col]
   (.desc (column col)))
@@ -875,6 +877,7 @@
     long-array squery-spark.datasets.operators/long-array
     string-array squery-spark.datasets.operators/string-array
     date-array squery-spark.datasets.operators/date-array
+    json squery-spark.datasets.operators/json
     asc squery-spark.datasets.operators/asc
     desc squery-spark.datasets.operators/desc
     soundex squery-spark.datasets.operators/soundex

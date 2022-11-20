@@ -9,6 +9,8 @@
                  [org.apache.spark/spark-core_2.12 "3.3.0"]
                  [org.apache.spark/spark-sql_2.12 "3.3.0"]
                  [org.apache.spark/spark-mllib_2.12 "3.3.0"]
+                 [graphframes/graphframes "0.8.1-spark3.0-s_2.12"]
+
 
                  ;;mongodb-connector 10.0.4 works only with scala 2.12
                  [org.mongodb.spark/mongo-spark-connector "10.0.4"
@@ -30,6 +32,8 @@
         ;squery-spark.spark-definitive-book.ch12
         ;squery-spark.udf-test
         ]
+
+  :repositories [["graph" {:url "https://repos.spark-packages.org" :checksum :ignore}]]
 
   :plugins [[lein-codox "0.10.7"]]
   :source-paths ["src/clojure"]

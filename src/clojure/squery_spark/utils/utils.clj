@@ -1,7 +1,9 @@
 (ns squery-spark.utils.utils
   (:require clojure.repl
             flatland.ordered.map
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io])
+  (:import (java.sql Date)
+           (java.time Instant)))
 
 (defn ordered-map
   ([] (flatland.ordered.map/ordered-map))
@@ -60,3 +62,15 @@
   (when (.isDirectory file)
     (run! delete-directory-recursive (.listFiles file)))
   (io/delete-file file))
+
+;;For example   {mydate (date "2019-01-01T00:00:00Z")}
+#_(defn ISODate
+  ([] (Date. (.getTime ^java.util.Date (java.util.Date.))))
+  ([date-s]
+   (Date/from (Instant/parse date-s))))
+
+;;timestamp = date+time
+;;date = date (yyyy-mm-dd)
+;;sql.date  works without time with strings like `yyyy-mm-dd`
+(defn ISODate [^String date-s]
+  (Date/valueOf date-s))

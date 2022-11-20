@@ -195,6 +195,12 @@
   [df new-alias]
   (.as df (name new-alias)))
 
+(defn rename [df names-map]
+  (reduce (fn [v t]
+            (.withColumnRenamed v (name (get t 1)) (name (get t 0))))
+          df
+          (into [] names-map)))
+
 ;;---------------------------------------statistics----------------------------------------------
 
 (defn describe [df & cols]
