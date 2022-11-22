@@ -34,16 +34,11 @@
    ((or (= :sal :lower-sal) (= :sal :max-sal)))
    show)
 
-;;6 alt
+;;ch11 6 alt
 (q (as emp :e1)
    (join (q (as emp :e2)
             (group {:min-sal (min :sal)} {:max-sal (max :sal)}))
          (or (= :e1.sal :max-sal) (= :e1.sal :min-sal)))
-   show)
-
-;;7.6 window function, sort and sum cookbook
-(q emp
-   {:running-total (window (sum :sal) (ws-sort :sal :empno))}
    show)
 
 ;;8.3 working days between 2 dates cookbook
@@ -70,18 +65,6 @@
    show)
 
 
-;;7 ch11, cookbook window function take the row in window after the offset
-(q emp2
-   {:next-sal (window (offset :salary 1) (ws-sort :!date))}
-   show)
 
-;;11 ch11 cookbook
-(q (as emp :e1)
-   [:e1.deptno :e1.ename :e1.sal :e1.hiredate]
-   {:latest-sal (window (first-acc :sal) (-> (ws-group :deptno)
-                                           (ws-sort :!hiredate)))}
-   (sort :deptno)
-   show)
 
-;;ch12 pivots and the opposite
 

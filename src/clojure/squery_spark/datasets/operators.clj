@@ -553,7 +553,7 @@
 
 (defn re-find
   ([match-regex-string col] (functions/regexp_extract (column col) match-regex-string (c/int 0)))
-  ([match-regex-string col grou-idx-number] (functions/regexp_extract (column col) match-regex-string (c/int grou-idx-number))))
+  ([match-regex-string col group-idx-number] (functions/regexp_extract (column col) match-regex-string (c/int group-idx-number))))
 
 (defn concat
   "works on strings, binary and arrays"
@@ -917,10 +917,6 @@
     drop-na squery-spark.datasets.stages/drop-na
     fill-na squery-spark.datasets.stages/fill-na
     replace-na squery-spark.datasets.stages/replace-na
-    cartesian squery-spark.datasets.stages/cartesian
-
-
-
     ])
 
 (def core-operators-mappings

@@ -1,7 +1,7 @@
 (ns squery-spark.datasets.stages
   (:refer-clojure :exclude [sort distinct])
   (:require [clojure.core :as c]
-            [squery-spark.datasets.internal.common :refer [columns column-keyword column single-maps sort-arguments]]
+            [squery-spark.datasets.internal.common :refer [columns column-keyword column single-maps sort-arguments as-internal]]
             [squery-spark.utils.utils :refer [string-map]])
   (:import (org.apache.spark.sql Dataset Column)
            [org.apache.spark.sql functions RelationalGroupedDataset DataFrameStatFunctions DataFrameNaFunctions]
@@ -74,9 +74,9 @@
   (let [[acc acc-maps]  [(filter #(not (map? %)) accs) (filter #(map? %) accs)]
         acc-maps (single-maps (into [] acc-maps))
         acc (concat (mapv (fn [m]
-                            (let [field-name (name (first (keys m)))
+                            (let [field-name (first (keys m))
                                   acc-value (first (vals m))]
-                              (.as acc-value field-name)))
+                              (as-internal acc-value field-name)))
                           acc-maps)
                     acc)
         acc-first  (first acc)
@@ -88,7 +88,7 @@
 ;;TODO FIX THE NIL THE DROP NO NEED
 (defn group
   "Call ways
-    Group only
+    Group only (to get the RelationalGroupedDataset, else i use select-distinct for distinct values)
      (group)=(group nil) (group field1 field2...)
     Group and accumulators
     (group :field1 :field2 ...
@@ -101,7 +101,10 @@
   (let [group-nil? (nil? (first cols-acc))
         cols-acc (if group-nil? (rest cols-acc) cols-acc)
         [cols acc]  [(filter #(not (map? %)) cols-acc) (filter #(map? %) cols-acc)]
-        cols (mapv #(if (vector? %) (.as  (column (second %)) (name (first %))) %) cols)
+        cols (mapv #(if (vector? %)
+                      (as-internal (column (second %)) (first %))
+                      %)
+                   cols)
         acc-maps (single-maps (into [] acc))]
     (cond
       (empty? acc-maps)                                     ;;group only (group)=(group nil) (group field1 field2...)
@@ -113,9 +116,9 @@
       :else
       (let [group (.groupBy df (into-array Column (columns cols)))
             acc (mapv (fn [m]
-                        (let [field-name (name (first (keys m)))
+                        (let [field-name (first (keys m))
                               acc-value (first (vals m))]
-                          (.as acc-value field-name)))
+                          (as-internal acc-value field-name)))
                       acc-maps)
             acc-first  (first acc)
             acc-rest (if (> (count acc) 1)
@@ -157,13 +160,11 @@
      (.join df1 df2 (.equalTo (.col df1 col1) (.col df2 col2)) (name join-type)))))
 
 (defn join
+  ([df1 df2] (.crossJoin df1 df2))
   ([df1 df2 join-condition]
    (.join df1 df2 (column join-condition)))
   ([df1 df2 join-condition join-type]
    (.join df1 df2 (column join-condition) (name join-type))))
-
-(defn cartesian [df1 df2]
-  (.crossJoin df1 df2))
 
 (defn union-with
   "union based on order of columns in the schema, ignores column names"

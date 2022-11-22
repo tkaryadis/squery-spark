@@ -25,10 +25,8 @@
 
 ;;using squery-mongo
 
-
-
 (update-defaults :client-settings (-> (MongoClientSettings/builder)
-                                      (.codecRegistry clj-registry) ;;Remove this if you want to decode in Java Document
+                                      (.codecRegistry clj-registry)
                                       (.build)))
 
 (update-defaults :client (MongoClients/create ^MongoClientSettings (defaults :client-settings)))

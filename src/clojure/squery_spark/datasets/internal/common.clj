@@ -3,6 +3,20 @@
             clojure.set)
   (:import [org.apache.spark.sql functions Column]))
 
+(defn as-internal
+  "{:a acol} or
+   {[:a :b] (explode {k1 v1 k2 v2})}"
+  [col new-name]
+  (cond
+    (vector? new-name)
+    (.as col (into-array String (map name new-name)))
+
+    (keyword? new-name)
+    (.as col (name new-name))
+
+    :else
+    (.as col new-name)))
+
 ;;the first 2 functions is to use
 ;;  keyword instead(col ...)
 ;;  simple literals instead (lit ...)
@@ -35,12 +49,12 @@
     (let [field (dissoc field :____select____)
           meta (get field :meta)
           field (dissoc field :meta)
-          k (name (first (keys field)))
+          k (first (keys field))
           v (first (vals field))
           v (column v)]
       (if meta
-        (.as v k meta)
-        (.as v k)))
+        (.as v (name k) meta)
+        (as-internal v k)))
 
     ;;map in clojure means MapType not struct
     (map? field)
@@ -88,12 +102,12 @@
     (let [field (dissoc field :____select____)
           meta (get field :meta)
           field (dissoc field :meta)
-          k (name (first (keys field)))
+          k (first (keys field))
           v (first (vals field))
           v (column-keyword v)]
       (if meta
-        (.as v k meta)
-        (.as v k)))
+        (.as v (name k) meta)
+        (as-internal v k)))
 
     ;;map in clojure means MapType not struct
     (map? field)
