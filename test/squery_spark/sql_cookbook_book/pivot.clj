@@ -26,6 +26,10 @@
 (def cnt (load-collection spark :cookbook.cnt))
 (def cnt1 (load-collection spark :cookbook.cnt1))
 
+
+;;TODO see stack and unpivot for spark, also unpivot with {[:a :b] (explode {k1 v1 k2 v2})}
+
+
 ;;pivot makes each distinct group value into a column
 ;;and then i run the accumulator for the initial group vars + pivot
 ;; i can think it as group in each pivot column
@@ -79,12 +83,18 @@
           {:deptno_30 (sum :deptno_30)})
    show)
 
+;;14-1 assumin that i dont know how many deptno i have and i need to get them from dept
+(q (as dept :d)
+   (select-distinct :deptno)
+   (join (as emp :e)  (= :e.deptno :d.deptno) :left_outer)
+   (group :d.deptno
+          {:cnt-emps (sum (if- (nil? :e.empno) 0 1))})
+   (group)
+   (pivot :deptno)
+   (agg (first-acc :cnt-emps))
+   show)
 
-;;------------------------unpivot---------------------------------------------------------
-
-;;TODO see stack and unpivot for spark, also unpivot with {[:a :b] (explode {k1 v1 k2 v2})}
-
-;;14- 2 un-pivot, explode map
+;;14- 2 un-pivot, explode map, column+value as pair
 (q t1
    [{:accounting 3}
     {:research 5}
@@ -109,4 +119,46 @@
                ["operations" :operations]])}]
    [{:dname (get :dname-cnt 0)}
     {:cnt (get :dname-cnt 1)}]
+   show)
+
+;;14-3
+(q emp
+   (group :deptno
+          {:cnt (count-acc)})
+   [{:deptno-cnt (str "D" :deptno "-" :cnt)}]
+   (group)
+   (pivot (first (split-str :deptno-cnt "-")))
+   (agg (first-acc (second (split-str :deptno-cnt "-"))))
+   show)
+
+
+
+;;14.8
+;; array way, ok if they fit in array
+(q emp
+   {:drank (window (dense-rank) (ws-sort :!sal))}
+   [:ename :sal {:type (cond (< :drank 4) "top3"
+                             (< :drank 7) "rest3"
+                             :else "rest")}]
+   (group)
+   (pivot :type)
+   (agg (conj-each [:ename :sal]))
+   (show false))
+
+;;14.8 with self-joins
+(q emp
+   {:drank (window (dense-rank) (ws-sort :!sal))}
+   [{:rest (if- (< :drank 7) [] [:ename :sal])} :drank]
+   [:rest {:nrows1 (window (row-number) (ws-sort (desc (long (second :rest)))))}]
+   (join (q emp
+            {:drank (window (dense-rank) (ws-sort :!sal))}
+            [{:top3 (if- (< :drank 4) [:ename :sal] [])} :drank]
+            [:top3 {:nrows2 (window (row-number) (ws-sort (desc (long (second :top3)))))}])
+         (= :nrows1 :nrows2))
+   (join (q emp
+            {:drank (window (dense-rank) (ws-sort :!sal))}
+            [{:next3 (if- (and (>= :drank 4) (< :drank 7)) [:ename :sal] [])} :drank]
+            [:next3 {:nrows3 (window (row-number) (ws-sort (desc (long (second :next3)))))}])
+         (= :nrows1 :nrows3))
+   [:top3 :next3 :rest]
    show)

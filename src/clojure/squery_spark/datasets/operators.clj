@@ -47,7 +47,7 @@
   (.minus (column col) 1))
 
 (defn * [& cols]
-  (nested2 #(.plus (column %1) (column %2)) cols))
+  (nested2 #(.multiply (column %1) (column %2)) cols))
 
 (defn mod [col other]
   (.mod (column col) (column other)))
@@ -548,10 +548,13 @@
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
-(defn re-find? [match-regex-string col]
+(defn re-find?
+  ""
+  [match-regex-string col]
   (.rlike (column col) match-regex-string))
 
 (defn re-find
+  "returns the match or empty string"
   ([match-regex-string col] (functions/regexp_extract (column col) match-regex-string (c/int 0)))
   ([match-regex-string col group-idx-number] (functions/regexp_extract (column col) match-regex-string (c/int group-idx-number))))
 

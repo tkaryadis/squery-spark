@@ -181,3 +181,49 @@
 (update- :cookbook.range1 (uq {:proj-start (date-from-string :proj-start "%d-%m-%Y")
                                :proj-end (date-from-string :proj-end "%d-%m-%Y")}))
 
+(def it-research [{:deptno 100 :ename "HOPKINS"}
+                  {:deptno 100 :ename "JONES"}
+                  {:deptno 100 :ename "TONEY"}
+                  {:deptno 200 :ename "MORALES"}
+                  {:deptno 200 :ename "P.WHITAKER"}
+                  {:deptno 200 :ename "MARCIANO"}
+                  {:deptno 200 :ename "ROBINSON"}
+                  {:deptno 300 :ename "LACY"}
+                  {:deptno 300 :ename "WRIGHT"}
+                  {:deptno 300 :ename "J.TAYLOR"}
+
+                  ])
+
+(try (drop-collection :cookbook.it-research) (catch Exception e ""))
+(insert :cookbook.it-research it-research)
+
+(def it-apps [{:deptno 400 :ename "CORRALES"}
+              {:deptno 400 :ename "MAYWEATHER"}
+              {:deptno 400 :ename "CASTILLO"}
+              {:deptno 400 :ename "MARQUEZ"}
+              {:deptno 400 :ename "MOSLEY"}
+              {:deptno 500 :ename "GATTI"}
+              {:deptno 500 :ename "CALZAGHE"}
+              {:deptno 600 :ename "LAMOTTA"}
+              {:deptno 600 :ename "HAGLER"}
+              {:deptno 600 :ename "HEARNS"}
+              {:deptno 600 :ename "FRAZIER"}
+              {:deptno 700 :ename "GUINN"}
+              {:deptno 700 :ename "JUDAH"}
+              {:deptno 700 :ename "MARGARITO"}
+
+              ])
+
+(try (drop-collection :cookbook.it-apps) (catch Exception e ""))
+(insert :cookbook.it-apps it-apps)
+
+(def parse-strings [{:strings "entry:stewiegriffin:lois:brian:"}
+                    {:strings "entry:moe::sizlack:"}
+                    {:strings "entry:petergriffin:meg:chris:"}
+                    {:strings "entry:willie:"}
+                    {:strings "entry:quagmire:mayorwest:cleveland:"}
+                    {:strings "entry:::flanders:"}
+                    {:strings "entry:robo:tchi:ken:"}])
+
+(try (drop-collection :cookbook.parse-strings) (catch Exception e ""))
+(insert :cookbook.parse-strings parse-strings)
