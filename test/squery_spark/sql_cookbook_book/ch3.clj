@@ -143,11 +143,3 @@
          true)
    ((< (if- (nil? :comm) 0 :comm)  :ward-comm))
    show)
-
-
-
-
-
-
-
-

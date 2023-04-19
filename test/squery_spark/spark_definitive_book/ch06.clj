@@ -38,6 +38,7 @@
 ;import org.apache.spark.sql.functions.lit
 ;df.select(lit(5), lit("five"), lit(5.0))
 
+
 (q df [5 "five" 5.0] show)
 
 ;df.where(col("InvoiceNo").equalTo(536365))
@@ -422,4 +423,3 @@
 ;;json skipped
 
 ;;for udf see udftest.clj
-

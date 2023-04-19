@@ -122,5 +122,3 @@
          (and (= :c.CustomerID :o.CustomerID) (= :EmployeeID 4))
          :left_anti)
    .show)
-
-

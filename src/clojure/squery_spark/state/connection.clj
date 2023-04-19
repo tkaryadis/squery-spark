@@ -26,5 +26,3 @@
   (-> spark
       (.sparkContext)
       (JavaSparkContext/fromSparkContext)))
-
-

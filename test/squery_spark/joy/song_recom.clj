@@ -51,5 +51,3 @@
           {:a (first-acc :a)})
    (sort :!count)
    (show 1000 false))
-
-

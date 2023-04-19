@@ -24,3 +24,5 @@ pom.xml.asc
 /test/squery_spark/spark_definitive_book/spark-warehouse/
 /.idea/
 #common-tips
+/.idea/
+/.lsp/

@@ -1,13 +1,13 @@
 (ns squery-spark.rdds.rdd
   (:refer-clojure :exclude [map reduce filter sort keys vals get
                             count distinct seq take frequencies first
-                            max min print])
+                            max min print println])
   (:require [clojure.core :as c])
   (:import (org.apache.spark.api.java.function FlatMapFunction PairFunction Function Function2 VoidFunction)
            (org.apache.spark.api.java JavaRDD JavaPairRDD)
            (scala Tuple2)))
 
-;;-----------------------functions-----------------------------
+;;------------------------------functions----------------------------------
 
 ;;TODO spark projects have those in java files, implementing seriaziableFn if problem maybe change
 (defrecord VF [f]
@@ -36,25 +36,37 @@
     (c/let [vector-pair (f x)]
       (Tuple2. (c/first vector-pair) (c/second vector-pair)))))
 
-(defn kv [k v]
-  (Tuple2. k v))
-
 ;;--------------------interop----------------------------------
 
-;;from https://github.com/zero-one-group/geni
-(defn to-vec [p]
+;;from https://github.com/zero-one-group/geni ??maybe better way?
+(defn v [p]
   (->> (.productArity p)
        (c/range)
-       (c/map #(.productElement p %))
-       (c/into [])))
+       (c/mapv #(.productElement p %))))
 
-(defn kv-to-vec [p]
-  [(.productElement p 0) (.productElement p 1)])
+(defn pv [pair]
+  [(.productElement pair 0) (.productElement pair 1)])
 
+(defn vp [pair-vector]
+  (Tuple2. (c/get pair-vector 0) (c/get pair-vector 1)))
+
+(defn p [k v]
+  (Tuple2. k v))
+
+(defn seq-pair
+  "clojure map to a sequence of tuples(pairs)"
+  [m]
+  (c/map (fn [pair] (p (c/first pair) (c/second pair))) m))
 
 ;;i can use this syntax also (._1 mytuple) (._2 mytuple) ...
-(defn tget [tpl n]
+(defn pget [tpl n]
   (.productElement tpl n))
+
+(defn p0 [tpl]
+  (._1 tpl))
+
+(defn p1 [tpl]
+  (._2 tpl))
 
 ;;-------------------tranformations----------------------------
 
@@ -70,13 +82,34 @@
 (defn lfilter [rdd f]
   (.filter rdd (F1. f)))
 
-(defn map-flat [f rdd]
+(defn map-flat
+  "f must return iterator, clojure collections work as return types"
+  [f rdd]
   (.flatMap ^JavaRDD rdd (FlatMap. f)))
 
 (defn lmap-flat [rdd f]
   (.flatMap ^JavaRDD rdd (FlatMap. f)))
 
-;;aggregate(U zeroValue, Function2<U,T,U> seqOp, Function2<U,U,U> combOp)
+(defn map-partitions
+  "rdd has many members, and each partition has some of this members
+   map partition takes as argument all the members of a partition
+   (iterator-seq arg-iterator) arg is iterator so i can convert to seq
+   result of f is also an iterable collection(like vec map etc they work ok)
+   Faster than map on each member(but custom more code)
+     1)less f calls once per partition vs 1 per member of the rdd,
+       also maybe i need to make enviroment for example with broadcast variables
+       that costs for each call
+     2)local aggregation on each partition, reduce or avoid the need
+       for grouping-aggregate the rdd (main reason)
+     3)reducing the rdd members locally, each partition might result to
+       much less members than it had, also reduces the need for external filter"
+  ([f1 rdd] (.mapPartitions rdd (FlatMap. f1)))
+  ([f1 rdd preserves-partitioning?] (.mapPartitions rdd (FlatMap. f1) preserves-partitioning?)))
+
+(defn map-partitions-indexed
+  ([f2 rdd] (.mapPartitionsWithIndex rdd (F2. f2) true))
+  ([f2 rdd preserves-partitioning?] (.mapPartitionsWithIndex rdd (F2. f2) preserves-partitioning?)))
+
 (defn reduce
   ([f rdd] (.reduce rdd (F2. f)))
   ([f1 f2-combine init-value rdd] (.aggregate rdd init-value (F2. f1) (F2. f2-combine))))
@@ -109,50 +142,65 @@
 (defn random-split [rdd & weights]
   (.randomSplit rdd (double-array weights)))
 
-(defn mapPartitions [rdd f]
-  (.mapPartitions rdd (FlatMap. f)))
-
-(defn mapPartitionsWithIndex [rdd f preservesPartitioning]
-  (.mapPartitionsWithIndex rdd (F2. f) preservesPartitioning))
-
 ;;-----------------------rdd-to-pairrdd----------------------------------
+
+;;map-to-pair if rdd is not already in tuple2
+(defn pair-rdd [rdd-tuple2-pairs]
+  (JavaPairRDD/fromJavaRDD rdd-tuple2-pairs))
 
 ;;this is what i use to return vector from clojure function and auto become tutple2 for rdd-pair
 (defn map-to-pair
   [f rdd]
   (.mapToPair rdd (Pair. f)))
 
-;;special case of map-to-pair, [(f value), value], map-to-pair simpler
-(defn to-kv [f rdd]
-  (.keyBy rdd (F1. f)))
+(defn map-vec-to-pair
+  "rdd with vecs of size 2, to rdd-pair"
+  [rdd]
+  (.mapToPair rdd (Pair. identity)))
 
 ;;map_ to (Tuple. a1 a2)  dont produce a JavaPairRDD (rdd with tutples produce)so i have to use mapToPair for it
 (defn lmap-to-pair [rdd f]
   (.mapToPair rdd (Pair. f)))
 
-;;-----------------JavaPairRDD the pair is a scala tuple2-------------------
+;;special case of map-to-pair where i keep the value as it is, and i only apply the f to the value to get the key,
+;;from not-pair RDD i get paired each per is ([(f value), value] ...) tuples
+(defn map-to-pair-key [f rdd]
+  (.keyBy rdd (F1. f)))
+
+
+;;---------------------------JavaPairRDD(on pairs)-----------------------------
 
 (defn group
-  "[k1 [v1,v2 ...] ..]
+  "group on a list
+   [k1 [v1,v2 ...] ..]
    returns JavaPairRDD<K,Iterable<V>>"
   [pair-rdd]
   (.groupByKey pair-rdd))
 
-;;cogroup(JavaPairRDD<K,W1> other1, JavaPairRDD<K,W2> other2, JavaPairRDD<K,W3> other3)
 
 (defn group-reduce
-  "2args
-    [k1 (reduce f [v1,v2 ...]) ...] f should be associative and commutative
-   4 args
-    [k1 (reduce f1 f2 init [v1,v2 ...]) ...] f1 is used in the same partition, f2 will combine the results from many partitions
-   "
-  ([f pair-rdd] (.reduceByKey pair-rdd (F2. f)))
-  ([f1 f2-combine init-value pair-rdd] (.aggregateByKey pair-rdd init-value (F2. f1) (F2. f2-combine))))
-
-(defn group-reduce-fn
-  "like group-reduce but instead of init value, i give a function to produce it from the first k,v"
-  [f1-combiner f2-merger init-function pair-rdd]
-  (.combineByKey pair-rdd (F1. init-function) (F2. f1-combiner)  (F2. f2-merger)))
+  "group+reduce on the group
+   first group by key so i can image [  [k1,[v1 v2 ...]   [k2,....]    ]
+   f is applied to the values, its 2 args f, keeps the state, and takes the v1 etc as second argument
+   2args
+    f is 2 args function and is applied to value
+   4 args init-value
+    f1 is used inside the partition, f2 is used to combine the partitions, they are both reduction functions
+    2 args state and next member
+   4 args fn for init-value
+     group-reduce with fn to produce the init-value from the first [k,v]
+     init-value = init-function(first-pair-value when combining)
+     init-function is used within the partition"
+  ([f pair-rdd]
+   (prn f pair-rdd)
+   (.reduceByKey pair-rdd (F2. f)))
+  ([f2-seq f2-comb init-value-or-fn pair-rdd]
+   (if (fn? init-value-or-fn)
+     (.combineByKey pair-rdd (F1. init-value-or-fn) (F2. f2-seq)  (F2. f2-comb))
+     (.aggregateByKey pair-rdd
+                      init-value-or-fn
+                      (F2. f2-seq)
+                      (F2. f2-comb)))))
 
 (defn group-reduce-neutral
   "like group reduce, but instead of initial value, or initial-fn
@@ -171,7 +219,10 @@
   ([pair-rdd1 pair-rdd2] (.cogroup pair-rdd1 pair-rdd2))
   ([pair-rdd1 pair-rdd2 pair-rdd3] (.cogroup pair-rdd1 pair-rdd2 pair-rdd3)))
 
-(defn map-values [f pair-rdd ]
+(defn map-values
+  "f takes as argument the pair, and the result will be the new-value,
+   the key remains unchanged"
+  [f pair-rdd]
   (.mapValues pair-rdd (F1. f)))
 
 (defn lmap-values [pair-rdd f]
@@ -191,7 +242,7 @@
 (defn vals [pair-rdd]
   (.values pair-rdd))
 
-(defn get [pair-rdd k]
+(defn lookup [pair-rdd k]
   (.lookup pair-rdd k))
 
 (defn sample-by-key
@@ -202,18 +253,13 @@
   ([pair-rdd with-replacement? fractions-map] (.sampleByKeyExact pair-rdd with-replacement? fractions-map))
   ([pair-rdd with-replacement? fractions-map seed] (.sampleByKeyExact pair-rdd with-replacement? fractions-map seed)))
 
-;;map-to-pair if rdd is not already in tuple2
-(defn to-pair-rdd [rdd-tuple2-pairs]
-  (JavaPairRDD/fromJavaRDD rdd-tuple2-pairs))
-
-
 (defn count-by-key-approx
   ([pair-rdd timeout] (.countByKeyApprox pair-rdd timeout))
   ([pair-rdd timeout confidence] (.countByKeyApprox pair-rdd timeout confidence)))
 
 ;;TODO add more types
 
-(defn join
+(defn join-rdd
   ([rdd rdd-other] (.join rdd rdd-other))
   ([rdd rdd-other npartitions] (.join rdd rdd-other npartitions)))
 
@@ -223,7 +269,7 @@
   [rdd rdd-other]
   (.zip rdd rdd-other))
 
-;;---------------------------------------------------
+;;----------------------------------------------------------------------------------------------------
 
 (defn count [rdd]
   (.count rdd))
@@ -234,7 +280,9 @@
 (defn seq [rdd]
   (.collect rdd))
 
-(defn take [n rdd]
+(defn take
+  "returns list not rdd, its action"
+  [n rdd]
   (.take rdd n))
 
 (defn take-ordered
@@ -271,6 +319,10 @@
   (dorun (c/map (c/comp c/print (partial str " ") #(.toString %)) (-> rdd (.collect))))
   (c/println))
 
+(defn println [rdd]
+  (dorun (c/map (c/comp c/print (partial str "\n") #(.toString %)) (-> rdd (.collect))))
+  (c/println))
+
 (defn print-pairs [paired-rdd]
   (dorun (c/map (c/comp c/print (partial str " ") #(.toString %)) (-> paired-rdd (.collect))))
   (c/println))
@@ -278,20 +330,61 @@
 (defn collect [rdd]
   (.collect rdd))
 
+(defn collect-pairs [rdd]
+  (mapv #(v %) (.collect rdd)))
+
 (defn j-rdd [df]
   (-> df .rdd .toJavaRDD))
+
+;;------------------------------------------macros---------------------------------------------
+
+(defmacro r [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     ~@args))
+
+(defmacro rlet [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     (let ~@args)))
+
+(defmacro r-> [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     (-> ~@args)))
+
+(defmacro r->> [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     (->> ~@args)))
+
+;;(fn [word] (* (c/count word) -1))
+(defmacro cfn [args body]
+  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
+     (fn ~args ~body)))
+
+(defmacro cpfn [args body]
+  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
+     (fn ~args (let [result# ~body] (p (c/get result# 0)
+                                       (c/get result# 1))))))
+
+;;TODO, cfn-kv , auto split arguments, and also auto-wrap back to kv
+#_(defmacro cfn-p [args body]
+    `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
+       (fn [p#]
+         (let [~(c/first args) (pget p# 0)
+               ~(c/second args) (pget p# 1)
+               result# ~body]
+           (p (c/get result# 0)
+              (c/get result# 1))))))
 
 ;;---------------------------------------------------dsl---------------------------------------
 
 (def rdd-operators-mappings
   '[
+    ;;clojure
     map squery-spark.rdds.rdd/map
     reduce squery-spark.rdds.rdd/reduce
     filter squery-spark.rdds.rdd/filter
     sort squery-spark.rdds.rdd/sort
     keys squery-spark.rdds.rdd/keys
-    vals squery-spark.rdds.rdd/vals 
-    get squery-spark.rdds.rdd/get
+    vals squery-spark.rdds.rdd/vals
     count squery-spark.rdds.rdd/count
     distinct squery-spark.rdds.rdd/distinct
     seq squery-spark.rdds.rdd/seq
@@ -301,9 +394,62 @@
     max squery-spark.rdds.rdd/max
     min squery-spark.rdds.rdd/min
     print squery-spark.rdds.rdd/print
+    println squery-spark.rdds.rdd/println
 
+    ;;not-clojure-optional to avoid refer
+    p squery-spark.rdds.rdd/p
+    v squery-spark.rdds.rdd/v
+    vp squery-spark.rdds.rdd/vp
+    pv squery-spark.rdds.rdd/pv
+    seq-pair squery-spark.rdds.rdd/seq-pair
+    pget squery-spark.rdds.rdd/pget
+    p0 squery-spark.rdds.rdd/p0
+    p1 squery-spark.rdds.rdd/p1
+    lmap squery-spark.rdds.rdd/lmap
+    lfilter squery-spark.rdds.rdd/lfilter
+    map-flat squery-spark.rdds.rdd/map-flat
+    lmap-flat squery-spark.rdds.rdd/lmap-flat
+    reduce-tree squery-spark.rdds.rdd/reduce-tree
+    lreduce squery-spark.rdds.rdd/lreduce
+    void-map squery-spark.rdds.rdd/void-map
+    lsort squery-spark.rdds.rdd/lsort
+    sort-desc squery-spark.rdds.rdd/sort-desc
+    lsort-desc squery-spark.rdds.rdd/lsort-desc
+    random-split squery-spark.rdds.rdd/random-split
+    map-partitions squery-spark.rdds.rdd/map-partitions
+    map-partitions-indexed squery-spark.rdds.rdd/map-partitions-indexed
+    map-to-pair squery-spark.rdds.rdd/map-to-pair
+    map-vec-to-pair squery-spark.rdds.rdd/map-to-pair
+    map-to-pair-key squery-spark.rdds.rdd/map-to-pair-key
+    lmap-to-pair squery-spark.rdds.rdd/lmap-to-pair
+    group squery-spark.rdds.rdd/group
+    group-reduce squery-spark.rdds.rdd/group-reduce
+    group-reduce-neutral squery-spark.rdds.rdd/group-reduce-neutral
+    group-count squery-spark.rdds.rdd/group-count
+    cogroup squery-spark.rdds.rdd/cogroup
+    map-values squery-spark.rdds.rdd/map-values
+    lmap-values squery-spark.rdds.rdd/lmap-values
+    map-flat-values squery-spark.rdds.rdd/map-flat-values
+    lmap-flat-values squery-spark.rdds.rdd/lmap-flat-values
+    sample-by-key squery-spark.rdds.rdd/sample-by-key
+    sample-by-key-exact squery-spark.rdds.rdd/sample-by-key-exact
+    pair-rdd squery-spark.rdds.rdd/pair-rdd
+    count-by-key-approx squery-spark.rdds.rdd/count-by-key-approx
+    join-rdd squery-spark.rdds.rdd/join-rdd
+    zip squery-spark.rdds.rdd/zip
+    take-ordered squery-spark.rdds.rdd/take-ordered
+    ltake-ordered squery-spark.rdds.rdd/ltake-ordered
+    top squery-spark.rdds.rdd/top
+    ltop squery-spark.rdds.rdd/ltop
+    print-pairs squery-spark.rdds.rdd/print-pairs
+    collect squery-spark.rdds.rdd/collect
+    collect-pairs squery-spark.rdds.rdd/collect-pairs
+    j-rdd squery-spark.rdds.rdd/j-rdd
+    lookup squery-spark.rdds.rdd/lookup
     ])
 
+;;30 sec 10billion times
+;;if problem i use c/... or do a walk to use only the symbols really used inside the function
 (def rdd-clojure-mappings
   '[
     map clojure.core/map
@@ -322,18 +468,6 @@
     max clojure.core/max
     min clojure.core/min
     print clojure.core/print
-
+    println clojure.core/println
     ])
 
-(defmacro r [& args]
-  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
-     ~@args))
-
-(defmacro r-> [& args]
-  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
-     (-> ~@args)))
-
-;;(fn [word] (* (c/count word) -1))
-(defmacro cfn [args body]
-  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
-     (fn ~args ~body)))

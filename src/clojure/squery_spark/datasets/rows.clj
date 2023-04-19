@@ -11,4 +11,3 @@
 (defn print-rows [rows-list]
   (let [rows-list (if (instance? Row rows-list) [rows-list] rows-list)]
     (dorun (map (comp println #(.toString %)) rows-list))))
-

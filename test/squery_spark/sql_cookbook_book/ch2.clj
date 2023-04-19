@@ -55,9 +55,3 @@
 (q emp
    (sort (if- (= :job "SALESMAN") :comm :sal))
    show)
-
-
-
-
-
-

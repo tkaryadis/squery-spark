@@ -11,6 +11,8 @@
                  [org.apache.spark/spark-mllib_2.12 "3.3.0"]
                  [graphframes/graphframes "0.8.1-spark3.0-s_2.12"]
 
+                 ;;? need this?
+                 [com.fasterxml.jackson.module/jackson-module-scala_2.12 "2.13.3"]
 
                  ;;mongodb-connector 10.0.4 works only with scala 2.12
                  [org.mongodb.spark/mongo-spark-connector "10.0.4"
@@ -22,10 +24,15 @@
 
                  [io.github.erp12/fijit "1.0.8"]
                  [org.flatland/ordered "1.5.9"]
+                 [org.apache.commons/commons-math3 "3.6.1"]
+
 
                  ]
   ;;aot, main,gen-class, delete target, and run with leinengen (sources that use udf+rdd)
   :aot [
+        ;;squery-spark.data-algorithms-book.ch1
+        ;squery-spark.data-algorithms-book.ch2
+        squery-spark.data-algorithms-book.ch3-ch4
         ;squery-spark.sql-cookbook-book.ch7
         ;squery-spark.udaf_test
         ;squery-spark.spark-definitive-book.ch13
@@ -38,7 +45,7 @@
   :plugins [[lein-codox "0.10.7"]]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
-  ;:main squery-spark.sql-cookbook-book.ch7
+  :main squery-spark.data-algorithms-book.ch3-ch4
   ;squery-spark.udaf_test
   ;squery-spark.spark-definitive-book.ch13
   ;squery-spark.udf-test

@@ -29,12 +29,16 @@
 ;;structType=array of structFiels = header
 ;;default string-type ,null true and no metadata
 (defn build-schema [cols-info]
-  "posible col-info = [[name0] [name1 type1] [name2 type2 false] [name3 type3 false metadata]]"
+  "posible col-info = [[name0] [name1 type1] [name2 type2 false] [name3 type3 false metadata]]
+   or :name0 or 'name0'  keywords and strings no need for vector"
   (let [structfields
         (reduce (fn [fields col-info]
                   (conj fields (StructField. (cond
                                                (keyword? col-info)
                                                (name col-info)
+
+                                               (string? col-info)
+                                               col-info
 
                                                (keyword? (first col-info))
                                                (name (first col-info))

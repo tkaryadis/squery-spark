@@ -124,31 +124,3 @@
    (group :e1.ename :e1.hiredate {:next-hiredate (min [:e2.hiredate :e2.ename])})
    {:days-diff (days-diff (get :next-hiredate 0) :e1.hiredate)}
    (show false))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

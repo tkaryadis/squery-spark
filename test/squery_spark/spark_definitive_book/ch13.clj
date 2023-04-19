@@ -204,4 +204,4 @@
 
 (print-pairs (zip words num-range))
 
-;;TODO some more it had
+;;done before controlling partitions

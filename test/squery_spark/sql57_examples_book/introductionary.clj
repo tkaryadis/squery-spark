@@ -173,15 +173,3 @@
     {:OrderDate (date-to-string :OrderDate "yyyy-mm-dd")}
     {:Shipper :CompanyName}]
    .show)
-
-
-
-
-
-
-
-
-
-
-
-

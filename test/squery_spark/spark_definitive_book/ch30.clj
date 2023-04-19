@@ -79,16 +79,3 @@
                            town-and-7th-edges))
 
 ;;TODO
-
-
-
-
-
-
-
-
-
-
-
-
-

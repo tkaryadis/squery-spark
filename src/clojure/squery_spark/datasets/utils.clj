@@ -4,7 +4,8 @@
             [squery-spark.datasets.internal.common :refer [columns]])
   (:import (org.apache.spark.sql RowFactory Column SparkSession)
            (org.apache.spark SparkContext)
-           (org.apache.spark.api.java JavaRDD JavaSparkContext)))
+           (org.apache.spark.api.java JavaPairRDD JavaRDD JavaSparkContext)
+           (scala Tuple2)))
 
 (defn parallelize
   ([spark data]
@@ -13,6 +14,14 @@
   ([spark data npartitions]
    (-> (get-java-spark-context spark)
        ^JavaRDD (.parallelize data npartitions))))
+
+(defn parallelize-pairs
+  ([spark data]
+   (-> ^JavaSparkContext (get-java-spark-context spark)
+       ^JavaPairRDD (.parallelizePairs data)))
+  ([spark data npartitions]
+   (-> (get-java-spark-context spark)
+       ^JavaPairRDD (.parallelizePairs data npartitions))))
 
 (defn seq->row [seq]
   (if (not (coll? seq))
@@ -25,6 +34,11 @@
 (defn seq->rdd
   ([seq spark] (parallelize spark seq))
   ([seq npartitions spark] (parallelize spark seq npartitions)))
+
+(defn seq->pair-rdd
+  ([seq spark] (parallelize-pairs spark (map #(Tuple2. (get % 0) (get % 1)) seq)))
+  ([seq npartitions spark]
+   (parallelize-pairs spark (map #(Tuple2. (get % 0) (get % 1)) seq) npartitions)))
 
 (defn rdd->df [rdd spark schema]
   (let [schema (if (vector? schema) (build-schema schema) schema)]

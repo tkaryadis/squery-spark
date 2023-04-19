@@ -1,0 +1,15 @@
+1)baskets are small and have items
+  *much less than all the possible items
+
+2)i have many baskets
+  too many to fit in memory
+
+3)s=minimun threshold
+
+  each subset of items to be accepted
+  must appear in n baskets with n > s
+
+4)use cases
+
+  1)supermarket(from where it took its name)
+  2)

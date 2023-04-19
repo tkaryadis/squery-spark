@@ -103,7 +103,3 @@
    (sort :!destination_total)
    (limit 5)
    .show)
-
-
-
-

@@ -1,0 +1,50 @@
+1)transformations are lazy and they produce RDD's
+  reduce computation (do all transofrmations in 1 iteration when possible)
+  spark auto-optimizes it
+2)actions trigger the evaluation
+3)DAG the directed graph that shows the tranformations that applied
+
+  i can see all jobs, and the DAG for each job(sparkcontext opens the port)
+  http://localhost:4040/
+
+4)RDDs are mostly for 1 member or a pair
+  Dataframe can be seen as an RDD where each member is a vector(a row)
+
+  i can do dataframe like work in RDDs but dataframes are more optimized
+  and simple to work with when each member is a vector(a row)
+
+5)Monoid
+
+  in reductions i need my f to be monoids the reason is that
+  spark is distributed so f works inside 1 partition, and then
+  combines the results also, if no monoid => wrong results will happen
+
+  for example mean(10, mean(30, 50)) != mean(mean(10, 30), 50)
+  mean is not a monoid
+
+  M = (T, f, Zero)
+
+  T = a type
+    f: (T, T) -> T
+  f = monoid assosiative binary function(order of f applied to args doesnt matter)
+    f(f(a, b), c) = f(a, f(b, c))
+  zero element (neutral elemement,identity element)
+       f(Zero, a) = a
+       f(a, Zero) = a
+
+  Example monoid functions
+
+    +,*,concat,set-union
+
+  Non monoid functions examples
+
+    mean,-,division,median
+
+6)One way to solve this problem is to use a temp monoid function to
+  do the reduce, and when done then apply the not-monoid one
+
+  Example of this if average of each pair
+  i use a pair reducing to [sum,count]
+  and when done the reducing i apply the median
+
+

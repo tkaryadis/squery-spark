@@ -229,6 +229,9 @@
 (defn int [col]
   (.cast (column col) (c/get schema-types :int)))
 
+(defn double [col]
+  (.cast (column col) (c/get schema-types :double)))
+
 (defn long-array
   ([col] (cast (column col) (array-type :long)))
   ([] (cast (column []) (array-type :long))))
@@ -457,9 +460,18 @@
   ([col percentage]
    (functions/percentile_approx (column col) (column percentage) (column 10000))))
 
-;;---------------------------window------------------------------------
+;;---------------------------window-----------------------------------------
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
+
+;;(wfields :state   //partition
+;           (sort :orderDate)    ;;if in q enviroment no need for namespace
+;           {:cumulativeQuantityForState (sum :quantity)
+;            :documents [\"unbounded\" \"current\"]})
+
+;(window acc-f window-spec)
+
+;(window {fields} ....)
 
 (defn window
   ([acc-fun window-spec] (.over (column acc-fun) window-spec))
@@ -549,9 +561,14 @@
 ;;--------------------------------------------------------------------------
 
 (defn re-find?
-  ""
+  "find with regex"
   [match-regex-string col]
   (.rlike (column col) match-regex-string))
+
+(defn find?
+  "find with sql-like string"
+  [match-string col]
+  (.like (column col) match-string))
 
 (defn re-find
   "returns the match or empty string"
@@ -704,7 +721,8 @@
    e.g. 10 minutes, 1 second
    org.apache.spark.unsafe.types.CalendarInterval for valid duration identifiers"
   ([col duration-str] (functions/window (column col) duration-str))
-  ([col duration-str slide-str] (functions/window (column col) duration-str slide-str)))
+  ([col duration-str slide-str] (functions/window (column col) duration-str slide-str))
+  ([col duration-str slide-str start-time-str] (functions/window (column col) duration-str slide-str start-time-str)))
 
 
 ;;-----------------------------Statistics-----------------------------------
@@ -877,6 +895,7 @@
     string squery-spark.datasets.operators/string
     long squery-spark.datasets.operators/long
     int squery-spark.datasets.operators/int
+    double squery-spark.datasets.operators/double
     long-array squery-spark.datasets.operators/long-array
     string-array squery-spark.datasets.operators/string-array
     date-array squery-spark.datasets.operators/date-array
@@ -920,6 +939,8 @@
     drop-na squery-spark.datasets.stages/drop-na
     fill-na squery-spark.datasets.stages/fill-na
     replace-na squery-spark.datasets.stages/replace-na
+    water-mark squery-spark.datasets.stages/water-mark
+    drop-duplicates squery-spark.datasets.stages/drop-duplicates
     ])
 
 (def core-operators-mappings

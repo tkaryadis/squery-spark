@@ -1,0 +1,76 @@
+1)data mining called in 1990s
+  after big data its called
+  data science
+
+2)model or algorithm
+
+  similar to
+  1)knowledge representation + generic reasoning algorithm
+  vs
+  2)reasoning algorithm that embeds knowledge
+  *but here we have data patterns and data algorithms
+
+  model helps us understand how data relate
+    for example group them on related groups
+  algorithm helps us get the new data (after we know how data are related)
+
+  sometimes we already understand enough how data relate, and
+  we need an algorithm
+
+  other times we don't have a clue how data are related, so we need
+  to make a model first and then make an algorithm
+  (if the model is good, algorithm can be simpler)
+
+  For example netflix and movies
+    the problem is so complicated to know before-hand what makes data related,
+    so we need first to create a model
+    the algorithmic only solution here, it will be bad idea, because we
+    dont know how data relates
+
+  I guess many times we need both
+    1)discover relations (modelling)
+    2)algorithm to use this relations
+
+3)Modelling approaches
+
+  1)summarize
+    so we know for all cases but approximate
+  2)separate
+    so we know for few cases but more accurate
+
+4)Feature Extraction
+
+  Frequent Itemsets
+    find parts of 1 item
+
+    *item = eat burger
+     parts = chesse+ketchup+meat etc
+
+  Similar Itemsets
+    find alternative parts of 1 item
+
+    *item = eat burger
+     alternative parts1  = heinz ketchup + mocharella cheese + ...
+     aleternative parts2 = hellmans ketchup + gouda chesse + ....
+
+
+  This way we can understand the parts of items
+  and also what alternatives we can have
+
+  *for example if i am making burgers it makes sense to have
+   all burger parts close, and in each part to have all alternatives close
+   to select
+
+5)Bonferroni’s Principle
+
+  its says that if possibilities are too many
+  i shouldn't try to find because i will lose time and wrong results
+
+  For example i know that evil people meet to plan in a hotel.
+  and i start to look at all hotels reservations
+  It doesn't make sense
+
+  Instead i should add much more createria to minimize the statistical error
+
+
+done 1.1 and 1.2

@@ -34,7 +34,7 @@
 (try (drop-collection :joy.takis-edges) (catch Exception e ""))
 
 (create-view :joy.users :takis-vertices
-             (= :userid 224283837859889152)
+             (= :userid 2)
              [:songs]
              (unwind :songs)
              (lookup :songs.songid :songs.songid :results)
@@ -44,7 +44,7 @@
              [:id {:song (if- :spotify-song :spotify-song :song)} :link])
 
 (create-view :joy.users :takis-edges
-             (= :userid 224283837859889152)
+             (= :userid 2)
              [:songs]
              (unwind :songs)
              (replace-root :songs)

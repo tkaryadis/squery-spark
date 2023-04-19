@@ -141,6 +141,9 @@
 (defn count-s [df]
   (.count df))
 
+(defn avg-s [df & col-str]
+  (.avg df (into-array String col-str)))
+
 (defn limit [df n]
   (.limit df n))
 
@@ -255,3 +258,15 @@
 
 (defn replace-na [df col map-replacements]
   (.replace (.na df) (.toString (column col)) (HashMap. (string-map map-replacements))))
+
+;;------------------------streaming-------------------------------------------------
+
+(defn water-mark [df event-time-str-or-keyword delay-str]
+  (.withWatermark df (name event-time-str-or-keyword) delay-str))
+
+;;public Dataset<T> dropDuplicates(String col1,String... cols)
+
+(defn drop-duplicates [df col-str-keyword & cols-str-keyword]
+  (.dropDuplicates df
+                   (name col-str-keyword)
+                   (into-array String (map name cols-str-keyword))))

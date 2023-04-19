@@ -160,3 +160,5 @@
 (pprint (r/top 5 words))
 
 ;;TODO there are some more
+
+;;done before saving files

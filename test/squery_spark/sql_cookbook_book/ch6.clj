@@ -174,11 +174,3 @@
    (show false))
 
 ;;16-17 skipped  soundex and some regex
-
-
-
-
-
-
-
-

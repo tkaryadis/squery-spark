@@ -1,0 +1,6 @@
+1)sequence = order list of symbols
+
+2)goal = find all subsequences that appear frequently
+
+3)items = set with all possible items
+  itemset = subset of items

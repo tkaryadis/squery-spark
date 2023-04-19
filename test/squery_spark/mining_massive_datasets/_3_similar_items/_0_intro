@@ -1,0 +1,17 @@
+1)Finding Similar Items
+
+  creteria might be many, and they can be many
+  one naive way is to examine all the pairs
+
+2)locality-sensitive hashing, or LSH
+
+  avoid looking all pairs
+
+3)Jaccard similarity = |S ∩ T |/|S ∪ T |   (common/all)
+
+  If items can be seen as sets of things
+  jaccard similarity is good way to find the similary
+
+  *for example similar texts, similar customers (buy similar items)
+
+4)
