@@ -1,6 +1,6 @@
 (ns squery-spark.rdds.rdd
   (:refer-clojure :exclude [map reduce filter sort keys vals get
-                            count distinct seq take frequencies first
+                            count distinct seq take frequencies
                             max min print println])
   (:require [clojure.core :as c])
   (:import (org.apache.spark.api.java.function FlatMapFunction PairFunction Function Function2 VoidFunction)
@@ -304,9 +304,6 @@
 (defn frequencies [rdd]
   (.countByValue rdd))
 
-(defn first [rdd]
-  (.first rdd))
-
 (defn max [rdd comp]
   (.max rdd comp))
 
@@ -336,44 +333,6 @@
 (defn j-rdd [df]
   (-> df .rdd .toJavaRDD))
 
-;;------------------------------------------macros---------------------------------------------
-
-(defmacro r [& args]
-  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
-     ~@args))
-
-(defmacro rlet [& args]
-  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
-     (let ~@args)))
-
-(defmacro r-> [& args]
-  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
-     (-> ~@args)))
-
-(defmacro r->> [& args]
-  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
-     (->> ~@args)))
-
-;;(fn [word] (* (c/count word) -1))
-(defmacro cfn [args body]
-  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
-     (fn ~args ~body)))
-
-(defmacro cpfn [args body]
-  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
-     (fn ~args (let [result# ~body] (p (c/get result# 0)
-                                       (c/get result# 1))))))
-
-;;TODO, cfn-kv , auto split arguments, and also auto-wrap back to kv
-#_(defmacro cfn-p [args body]
-    `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
-       (fn [p#]
-         (let [~(c/first args) (pget p# 0)
-               ~(c/second args) (pget p# 1)
-               result# ~body]
-           (p (c/get result# 0)
-              (c/get result# 1))))))
-
 ;;---------------------------------------------------dsl---------------------------------------
 
 (def rdd-operators-mappings
@@ -390,7 +349,6 @@
     seq squery-spark.rdds.rdd/seq
     take squery-spark.rdds.rdd/take
     frequencies squery-spark.rdds.rdd/frequencies
-    first squery-spark.rdds.rdd/first
     max squery-spark.rdds.rdd/max
     min squery-spark.rdds.rdd/min
     print squery-spark.rdds.rdd/print
@@ -464,10 +422,71 @@
     seq clojure.core/seq
     take clojure.core/take
     frequencies clojure.core/frequencies
-    first clojure.core/first
     max clojure.core/max
     min clojure.core/min
     print clojure.core/print
     println clojure.core/println
     ])
 
+;;------------------------------------------macros---------------------------------------------
+
+(defmacro r [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     ~@args))
+
+(defmacro rlet [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     (let ~@args)))
+
+(defmacro r-> [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     (-> ~@args)))
+
+(defmacro r->> [& args]
+  `(let ~squery-spark.rdds.rdd/rdd-operators-mappings
+     (->> ~@args)))
+
+;;(fn [word] (* (c/count word) -1))
+(defmacro cfn [args body]
+  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
+     (fn ~args ~body)))
+
+#_(defmacro cpfn [args body]
+  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
+     (fn ~args (let [result# ~body] (p (c/get result# 0)
+                                       (c/get result# 1))))))
+
+
+(defn vec-to-t [v]
+  (if (c/and (c/vector? v) (= (c/count v) 2))
+    (let [a1 (vec-to-t (c/first v))
+          a2 (vec-to-t (c/second v))]
+      (p a1 a2))
+    v))
+
+(defn t-to-vec [t]
+  (if (instance? Tuple2 t)
+    (pv t)
+    t))
+
+(defn fix-args [args]
+  (c/into [] (c/apply c/concat (c/map (c/fn [v]
+                                    [v `(t-to-vec ~v)])
+                                  args))))
+
+(defmacro pfn [args body]
+  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
+     (fn ~args
+       (let ~(fix-args args)
+         (vec-to-t ~body)))))
+
+
+;;TODO, cfn-kv , auto split arguments, and also auto-wrap back to kv
+#_(defmacro cfn-p [args body]
+    `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
+       (fn [p#]
+         (let [~(c/first args) (pget p# 0)
+               ~(c/second args) (pget p# 1)
+               result# ~body]
+           (p (c/get result# 0)
+              (c/get result# 1))))))

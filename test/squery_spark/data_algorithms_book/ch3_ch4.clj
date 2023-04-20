@@ -8,7 +8,7 @@
         [squery-spark.rdds.rdd])
   (:refer-clojure)
   (:require [squery-spark.state.connection :refer [get-spark-session get-spark-context get-java-spark-context]]
-            [squery-spark.rdds.rdd :as r :refer [rlet r r-> r->> cfn cpfn]]
+            [squery-spark.rdds.rdd :as r :refer [rlet r r-> r->> cfn pfn]]
             [squery-spark.datasets.stages]
             [clojure.pprint :refer [pprint]]
             [squery-spark.datasets.queries :refer [q]]
@@ -30,7 +30,6 @@
 
 (def data-path "/home/white/IdeaProjects/squery-spark/data-used/data-algorithms/")
 (defn -main [])
-
 
 ;;ch3(mappings) simple code filter etc
 
@@ -55,7 +54,7 @@
 (r (print-pairs (group-reduce + + identity prdd)))
 
 ;;group-reduce-fn (with f-init that does something useful)
-(r (print-pairs (map-values (fn [p] (/ (p0 p) (p1 p)))
+#_(r (print-pairs (map-values (fn [p] (/ (p0 p) (p1 p)))
                      (group-reduce
                        ;;c the state pair v the next value a number
                        (cpfn [c v] [(+ (p0 c) v) (+ (p1 c) 1)])
@@ -67,6 +66,21 @@
                        (cpfn [v] [v 1])
                        prdd))))
 
+(r (print-pairs (map-values (pfn [p] (/ (get p 0) (get p 1)))
+                            (group-reduce
+                              ;;c the state pair v the next value a number
+                              (pfn [c v] [(+ (get c 0) v) (+ (get c 1) 1)])
+                              ;;c1 c2 both pairs
+                              (pfn [c1 c2] [(+ (get c1 0) (get c2 0))
+                                            (+ (get c1 1) (get c2 1))])
+                              ;;create the init state pair from v number
+                              ;;v becomes [v 1] [sum count]
+                              (pfn [v] [v 1])
+                              prdd))))
+
+
+(System/exit 0)
+
 ;;------------------------------movies dataset-----------------------------------
 
 ;;find the average rating for each user
@@ -75,7 +89,7 @@
 (def ratings (read-csv-no-header sc (str data-path "/ch2/ml-latest-small/ratings.csv")))
 
 ;;sol1 group-reduce-fn  or init-value
-(rlet [ratings (map-to-pair (cfn [line]
+#_(rlet [ratings (map-to-pair (cfn [line]
                               (let [line-parts (clojure.string/split line #",")]
                                 [(read-string (get line-parts 0))
                                  (Double/parseDouble (get line-parts 2))]))
@@ -90,7 +104,7 @@
   (print-pairs ratings))
 
 ;;sol2
-(rlet [ratings (map-to-pair (cfn [line]
+#_(rlet [ratings (map-to-pair (cfn [line]
                               (let [line-parts (clojure.string/split line #",")]
                                 [(read-string (get line-parts 0))
                                  (p (Double/parseDouble (get line-parts 2))
