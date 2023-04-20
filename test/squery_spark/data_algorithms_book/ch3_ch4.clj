@@ -54,20 +54,9 @@
 (r (print-pairs (group-reduce + + identity prdd)))
 
 ;;group-reduce-fn (with f-init that does something useful)
-#_(r (print-pairs (map-values (fn [p] (/ (p0 p) (p1 p)))
-                     (group-reduce
-                       ;;c the state pair v the next value a number
-                       (cpfn [c v] [(+ (p0 c) v) (+ (p1 c) 1)])
-                       ;;c1 c2 both pairs
-                       (cpfn [c1 c2] [(+ (p0 c1) (p0 c2))
-                                      (+ (p1 c1) (p1 c2))])
-                       ;;create the init state pair from v number
-                       ;;v becomes [v 1] [sum count]
-                       (cpfn [v] [v 1])
-                       prdd))))
-
 (r (print-pairs (map-values (pfn [p] (/ (get p 0) (get p 1)))
                             (group-reduce
+                              ;;state = [sum count]
                               ;;c the state pair v the next value a number
                               (pfn [c v] [(+ (get c 0) v) (+ (get c 1) 1)])
                               ;;c1 c2 both pairs
@@ -79,8 +68,6 @@
                               prdd))))
 
 
-(System/exit 0)
-
 ;;------------------------------movies dataset-----------------------------------
 
 ;;find the average rating for each user
@@ -88,34 +75,37 @@
 
 (def ratings (read-csv-no-header sc (str data-path "/ch2/ml-latest-small/ratings.csv")))
 
-;;sol1 group-reduce-fn  or init-value
-#_(rlet [ratings (map-to-pair (cfn [line]
-                              (let [line-parts (clojure.string/split line #",")]
-                                [(read-string (get line-parts 0))
-                                 (Double/parseDouble (get line-parts 2))]))
-                            ratings)
-       ratings (group-reduce (cpfn [c v] [(+ (p0 c) v) (+ (p1 c) 1)])
-                             (cpfn [c1 c2] [(+ (p0 c1) (p0 c2))
-                                               (+ (p1 c1) (p1 c2))])
-                             (fn [v] [v 1])  ;;or  (p 0 0)
+;;sol1 with init-value/fn
+;;make-pair [userid rating]
+;;group-reduce [sum,count]    fn(combineByKey) or init-value(aggregate by key)
+(rlet [ratings (map (pfn [line]
+                      (let [line-parts (clojure.string/split line #",")]
+                        [(read-string (get line-parts 0))
+                         (Double/parseDouble (get line-parts 2))]))
+                    ratings)
+       ;;state = [sum,count]
+       ratings (group-reduce (pfn [c v] [(+ (get c 0) v) (+ (get c 1) 1)])
+                             (pfn [c1 c2] [(+ (get c1 0) (get c2 0))
+                                           (+ (get c1 1) (get c2 1))])
+                             (pfn [v] [v 1])  ;;or  (p 0 0)
                              ratings)
-       ratings (map-values (fn [p] (/ (p0 p) (p1 p))) ratings)
+       ratings (map-values (pfn [p] (/ (get p 0) (get p 1))) ratings)]
+  (print-pairs ratings))
+
+;;sol2 without init-value/fn
+;;make-pair [userid [rating 1]]  = [userid [sum,count]]  so i make the init-value from step1
+;;group-reduce with 2 args
+(rlet [ratings (map (pfn [line]
+                      (let [line-parts (clojure.string/split line #",")]
+                        [(read-string (get line-parts 0))
+                         [(Double/parseDouble (get line-parts 2)) 1]]))
+                    ratings)
+       ;;state = [sum,count]
+       ratings (group-reduce (pfn [value this]
+                               [(+ (get value 0) (get this 0))
+                                (+ (get value 1) 1)])
+                             ratings)
+       ratings (map-values (pfn [p] (/ (get p 0) (get p 1))) ratings)
        ]
   (print-pairs ratings))
 
-;;sol2
-#_(rlet [ratings (map-to-pair (cfn [line]
-                              (let [line-parts (clojure.string/split line #",")]
-                                [(read-string (get line-parts 0))
-                                 (p (Double/parseDouble (get line-parts 2))
-                                    1)]))
-                            ratings)
-       ratings (group-reduce (cpfn [value this]
-                               [(+ (p0 value) (p0 this))
-                                (+ (p1 value) (p1 this))])
-                             ratings)
-       ;ratings
-       #_(map-to-pair (cfn [pair]
-                      [(p0 pair) (/ (p0 (p1 pair)) (p1 (p1 pair)))])
-                    ratings)]
-  (print-pairs ratings))

@@ -1,3 +1,5 @@
+#progress- Part 1 done
+
 1)transformations are lazy and they produce RDD's
   reduce computation (do all transofrmations in 1 iteration when possible)
   spark auto-optimizes it
@@ -46,5 +48,17 @@
   Example of this if average of each pair
   i use a pair reducing to [sum,count]
   and when done the reducing i apply the median
+
+7)Shuffle in group-reduce
+
+  when i group by a key and i want to apply the function
+  if data with that key are in different machines they need all to move
+  to 1 server so i can do the function
+
+  this moving of data is called shuffling
+
+  1)sort data by key
+  2)shuffle data so all data for 1 key in same server
+
 
 

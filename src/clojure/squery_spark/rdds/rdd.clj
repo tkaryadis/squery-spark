@@ -175,7 +175,8 @@
    [k1 [v1,v2 ...] ..]
    returns JavaPairRDD<K,Iterable<V>>"
   [pair-rdd]
-  (.groupByKey pair-rdd))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.groupByKey pair-rdd)))
 
 
 (defn group-reduce
@@ -192,27 +193,30 @@
      init-value = init-function(first-pair-value when combining)
      init-function is used within the partition"
   ([f pair-rdd]
-   (prn f pair-rdd)
-   (.reduceByKey pair-rdd (F2. f)))
+   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+     (.reduceByKey pair-rdd (F2. f))))
   ([f2-seq f2-comb init-value-or-fn pair-rdd]
-   (if (fn? init-value-or-fn)
-     (.combineByKey pair-rdd (F1. init-value-or-fn) (F2. f2-seq)  (F2. f2-comb))
-     (.aggregateByKey pair-rdd
-                      init-value-or-fn
-                      (F2. f2-seq)
-                      (F2. f2-comb)))))
+   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+     (if (fn? init-value-or-fn)
+       (.combineByKey pair-rdd (F1. init-value-or-fn) (F2. f2-seq)  (F2. f2-comb))
+       (.aggregateByKey pair-rdd
+                        init-value-or-fn
+                        (F2. f2-seq)
+                        (F2. f2-comb))))))
 
 (defn group-reduce-neutral
   "like group reduce, but instead of initial value, or initial-fn
    give a neutral value to start with like 0 for addition or 1 for mul etc"
   [f neutral-value pair-rdd]
-  (.foldByKey pair-rdd neutral-value (F2. f)))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.foldByKey pair-rdd neutral-value (F2. f))))
 
 (defn group-count
   "[k1 (+ v1 v2 ...) ..] , special case of group-reduce where f=+
    returns java.util.Map<K,Long>"
   [pair-rdd]
-  (.countByKey pair-rdd))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.countByKey pair-rdd)))
 
 (defn cogroup
   "like group but does it in 'the union' of the rdfs"
@@ -223,42 +227,60 @@
   "f takes as argument the pair, and the result will be the new-value,
    the key remains unchanged"
   [f pair-rdd]
-  (.mapValues pair-rdd (F1. f)))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.mapValues pair-rdd (F1. f))))
 
 (defn lmap-values [pair-rdd f]
-  (.mapValues pair-rdd (F1. f)))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.mapValues pair-rdd (F1. f))))
 
 (defn map-flat-values [f pair-rdd]
-  (.flatMapValues pair-rdd (FlatMap. f)))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.flatMapValues pair-rdd (FlatMap. f))))
 
 (defn lmap-flat-values
   "[k,v] => (k,f=[v1 v2 ...]) (flatmap)=> (k,v1) (k,v2) ..."
   [pair-rdd f]
-  (.flatMapValues pair-rdd (FlatMap. f)))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.flatMapValues pair-rdd (FlatMap. f))))
 
 (defn keys [pair-rdd]
-  (.keys pair-rdd))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.keys pair-rdd)))
 
 (defn vals [pair-rdd]
-  (.values pair-rdd))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.values pair-rdd)))
 
 (defn lookup [pair-rdd k]
-  (.lookup pair-rdd k))
+  (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+    (.lookup pair-rdd k)))
 
 (defn sample-by-key
-  ([pair-rdd with-replacement? fractions-map] (.sampleByKey pair-rdd with-replacement? fractions-map))
-  ([pair-rdd with-replacement? fractions-map seed] (.sampleByKey pair-rdd with-replacement? fractions-map seed)))
+  ([pair-rdd with-replacement? fractions-map]
+   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+     (.sampleByKey pair-rdd with-replacement? fractions-map)))
+  ([pair-rdd with-replacement? fractions-map seed]
+   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+     (.sampleByKey pair-rdd with-replacement? fractions-map seed))))
 
 (defn sample-by-key-exact
-  ([pair-rdd with-replacement? fractions-map] (.sampleByKeyExact pair-rdd with-replacement? fractions-map))
-  ([pair-rdd with-replacement? fractions-map seed] (.sampleByKeyExact pair-rdd with-replacement? fractions-map seed)))
+  ([pair-rdd with-replacement? fractions-map]
+   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+     (.sampleByKeyExact pair-rdd with-replacement? fractions-map)))
+  ([pair-rdd with-replacement? fractions-map seed]
+   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+     (.sampleByKeyExact pair-rdd with-replacement? fractions-map seed))))
 
 (defn count-by-key-approx
-  ([pair-rdd timeout] (.countByKeyApprox pair-rdd timeout))
-  ([pair-rdd timeout confidence] (.countByKeyApprox pair-rdd timeout confidence)))
+  ([pair-rdd timeout]
+   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+     (.countByKeyApprox pair-rdd timeout)))
+  ([pair-rdd timeout confidence]
+   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
+     (.countByKeyApprox pair-rdd timeout confidence))))
 
 ;;TODO add more types
-
 (defn join-rdd
   ([rdd rdd-other] (.join rdd rdd-other))
   ([rdd rdd-other npartitions] (.join rdd rdd-other npartitions)))
@@ -451,12 +473,6 @@
   `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
      (fn ~args ~body)))
 
-#_(defmacro cpfn [args body]
-  `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
-     (fn ~args (let [result# ~body] (p (c/get result# 0)
-                                       (c/get result# 1))))))
-
-
 (defn vec-to-t [v]
   (if (c/and (c/vector? v) (= (c/count v) 2))
     (let [a1 (vec-to-t (c/first v))
@@ -479,14 +495,3 @@
      (fn ~args
        (let ~(fix-args args)
          (vec-to-t ~body)))))
-
-
-;;TODO, cfn-kv , auto split arguments, and also auto-wrap back to kv
-#_(defmacro cfn-p [args body]
-    `(let ~squery-spark.rdds.rdd/rdd-clojure-mappings
-       (fn [p#]
-         (let [~(c/first args) (pget p# 0)
-               ~(c/second args) (pget p# 1)
-               result# ~body]
-           (p (c/get result# 0)
-              (c/get result# 1))))))
