@@ -32,13 +32,25 @@
   (parallelize spark (map seq->row seq)))
 
 (defn seq->rdd
+  "uses the default Java-spark-context and .parallize method"
   ([seq spark] (parallelize spark seq))
   ([seq npartitions spark] (parallelize spark seq npartitions)))
 
 (defn seq->pair-rdd
-  ([seq spark] (parallelize-pairs spark (map #(Tuple2. (get % 0) (get % 1)) seq)))
+  ([seq spark] (parallelize-pairs spark
+                                  (map (fn [t]
+                                         (instance? Tuple2 t)
+                                         t
+                                         (Tuple2. (get t 0) (get t 1)))
+                                       seq)))
   ([seq npartitions spark]
-   (parallelize-pairs spark (map #(Tuple2. (get % 0) (get % 1)) seq) npartitions)))
+   (parallelize-pairs spark
+                      (map (fn [t]
+                             (instance? Tuple2 t)
+                             t
+                             (Tuple2. (get t 0) (get t 1)))
+                           seq)
+                      npartitions)))
 
 (defn rdd->df [rdd spark schema]
   (let [schema (if (vector? schema) (build-schema schema) schema)]

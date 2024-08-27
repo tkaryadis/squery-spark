@@ -108,4 +108,3 @@
        ratings (map-values (pfn [p] (/ (get p 0) (get p 1))) ratings)
        ]
   (print-pairs ratings))
-

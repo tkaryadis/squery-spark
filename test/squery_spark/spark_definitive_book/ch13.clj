@@ -53,7 +53,7 @@
 ;;keyword.flatMapValues(word => word.toUpperCase).collect()
 
 ;;[k,v] => (k,f=[v1 v2 ...]) (flatmap)=> (k,v1) (k,v2) ...
-(print-pairs (map-flat-values (fn [kw] [(s/upper-case kw)]) key-word))
+(print-pairs (flatmap-values (fn [kw] [(s/upper-case kw)]) key-word))
 
 ;keyword.keys.collect()
 ;keyword.values.collect()
@@ -74,15 +74,15 @@
 ;  .sampleByKey(true, sampleMap, 6L)
 ;  .collect()
 
-(def distinct-chars (collect (r/distinct (map-flat (fn [w] (map s/lower-case w)) words))))
+(def distinct-chars (collect (.distinct (flatmap (fn [w] (map s/lower-case w)) words))))
 (pprint distinct-chars)
 
 (def sample-map (into {} (mapv (fn [c] [c, (rand)]) distinct-chars)))
 (prn sample-map)
 
-
+;;TODO
 (r (print-pairs
-     (sample-by-key (to-kv (cfn [w] (s/lower-case (first w))) words)
+     (sample-by-key (p (cfn [w] (s/lower-case (first w))) words)
                     true
                     sample-map
                     6)))
@@ -92,7 +92,7 @@
 ;  .sampleByKeyExact(true, sampleMap, 6L).collect()
 
 (r (print-pairs
-     (sample-by-key-exact (to-kv (cfn [w] (s/lower-case (first w))) words)
+     (sample-by-key-exact (p (cfn [w] (s/lower-case (first w))) words)
                           true
                           sample-map
                           6)))
@@ -102,10 +102,10 @@
 ;def maxFunc(left:Int, right:Int) = math.max(left, right)
 ;def addFunc(left:Int, right:Int) = left + right
 
-(def cs (map-flat (fn [w] (map s/lower-case w)) words))
+(def cs (flatmap (fn [w] (map s/lower-case w)) words))
 (r/print cs)
 
-(def kv-cs (r/to-pair-rdd (r/map (fn [l] (kv l 1)) cs)))
+(def kv-cs (pair-rdd (r/map (fn [l] (p l 1)) cs)))
 (defn max-func [left right] (max left right))
 (defn add-func [left right] (+ left right))
 
@@ -119,7 +119,7 @@
 
 
 ;;group-reduce better than this
-(r (print (map (cfn [t2] (apply + (tget t2 1))) (group kv-cs))))
+(r (print (map (cfn [t2] (apply + (pget t2 1))) (group kv-cs))))
 
 (println "PAIR-RDD")
 (r (print kv-cs))
@@ -161,7 +161,7 @@
 ;    outputPartitions)
 ;  .collect()
 
-(r (print-pairs (group-reduce-fn conj #(apply conj %1 %2) vector kv-cs)))
+(r (print-pairs (group-reduce conj #(apply conj %1 %2) vector kv-cs)))
 
 
 ;// in Scala
@@ -178,7 +178,7 @@
 ;val charRDD3 = distinctChars.map(c => (c, new Random().nextDouble()))
 ;charRDD.cogroup(charRDD2, charRDD3).take(5)
 
-(def distinct-cs (map-flat (fn [w] (map s/lower-case w)) words))
+(def distinct-cs (flatmap (fn [w] (map s/lower-case w)) words))
 (r/print distinct-cs)
 (def char-rdd1 (map-to-pair (fn [c] [c (rand)]) distinct-cs))
 (def char-rdd2 (map-to-pair (fn [c] [c (rand)]) distinct-cs))
@@ -192,16 +192,16 @@
 ;KVcharacters.join(keyedChars, outputPartitions).count()
 
 (def keyed-chars (map-to-pair (fn [c] [c (rand)]) distinct-cs))
-(print-pairs (join kv-cs keyed-chars))
-(print-pairs (join kv-cs keyed-chars 10))
+(print-pairs (.join kv-cs keyed-chars))
+(print-pairs (.join kv-cs keyed-chars 10))
 
 ;;;val numRange = sc.parallelize(0 to 9, 2)
 ;;words.zip(numRange).collect()
 
 (def num-range (.parallelize sc (range 0 10) 2))
-(prn (r/count num-range))
-(prn (r/count words))
+(prn (.count num-range))
+(prn (.count words))
 
-(print-pairs (zip words num-range))
+(print-pairs (.zip words num-range))
 
 ;;done before controlling partitions

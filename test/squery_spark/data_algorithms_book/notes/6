@@ -1,0 +1,80 @@
+1)tables are like describing objects
+
+2)graphs is about knowledge
+  because it adds the relationships also
+
+  know objects + how they relate => know how world works
+
+3)Graphframes will be used
+
+4)Graphs
+
+  V nodes, vertices (unique ID each)
+  E pairs, edges
+    directed
+    undirected
+     (graphframes are all directed graphs, but i can make
+      a undirected by adding both edges --> <-- in all connected nodes)
+
+
+  both can have attributes
+
+5)Graph libraries
+
+  GraphX
+    rdds
+    scala,java
+    algorithms
+    doesnt support graph pattern matching
+
+  GraphFrames (high level,external library)
+    dataframes
+    scala,java,python
+    algorithms + queries
+    support graph pattern matching
+
+6)GraphFrame class
+
+class GraphFrame {
+  def vertices: DataFrame
+  def edges: DataFrame
+  def find(pattern: String): DataFrame
+  def degrees(): DataFrame
+  def pageRank(): GraphFrame
+  def connectedComponents(): GraphFrame
+  ...
+}
+
+7)supported algorithms include
+
+  • Motif finding
+  • Breadth-first search (BFS)
+  • Connected components
+  • Strongly connected components
+  • Label propagation
+  • PageRank
+  • Shortest path
+  • Triangle count
+
+8)Motifs
+
+  [] edges
+  () nodes
+  "(a)-[e1]->(b); (b)-[e2]->(c)"
+
+    result is dataframe with all the variables
+    a,b,e1,e2 in all combinations that
+    match and values the properties as StructType
+
+  if empty means not put column like i dont care
+  both can be empty vertice or edge
+
+    (a)-[e]->()
+    (a)-[]->(b)
+
+  negated triplets
+    !triplet  (meaning that this type of connection shouldnt exist)
+
+    For example,  a->b to exist but not b->a
+    (a)-[]->(b); !(b)-[]->(a)
+

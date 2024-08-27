@@ -67,19 +67,9 @@
 
 
 ;;Window functions(also called olap functions,analytic functions)
-;;  act on a group but dont return 1 value per group like group-by
-;;  they return multiple values for each group
-
-;;all aggregate functions can be also used as window functions (ansi sql)
-
-;; group was
-;;  1 acc on table (if no group defined)
-;;  1 acc on each group
-
-;; window functions are
-;;   1 acc on each row, in which row we are it matters (i use the values from the row inside the window definition)
-;; i use them when i want to add information to a row, that requires aggregation function
-;; (same row info is not enough, i need to aggregate)
+;;group no fields => 1 aggregation per table
+;;group with fields => 1 aggregation per group
+;;window functions => 1 aggregation per row
 
 ;; 1 group per row, like do the count for each row
 ;; window without group/sort etc

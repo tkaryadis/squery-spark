@@ -1,11 +1,16 @@
 (ns squery-spark.rdds.rdd
-  (:refer-clojure :exclude [map reduce filter sort keys vals get
-                            count distinct seq take frequencies
+  (:refer-clojure :exclude [map reduce filter sort keys vals
+                            seq take frequencies
                             max min print println])
   (:require [clojure.core :as c])
   (:import (org.apache.spark.api.java.function FlatMapFunction PairFunction Function Function2 VoidFunction)
            (org.apache.spark.api.java JavaRDD JavaPairRDD)
            (scala Tuple2)))
+
+;;Clojure wrappers are used only when it makes sense
+;;1)a function arg is needed
+;;2)clojure core library has different name (sometimes the diffrent name is kept)
+;; examples where no wrappers  .distinct, .first, .count .zip etc
 
 ;;------------------------------functions----------------------------------
 
@@ -82,12 +87,12 @@
 (defn lfilter [rdd f]
   (.filter rdd (F1. f)))
 
-(defn map-flat
-  "f must return iterator, clojure collections work as return types"
+(defn flatmap
+  "f must return iterator, and then its flatten clojure collections work as return types"
   [f rdd]
   (.flatMap ^JavaRDD rdd (FlatMap. f)))
 
-(defn lmap-flat [rdd f]
+(defn lflatmap [rdd f]
   (.flatMap ^JavaRDD rdd (FlatMap. f)))
 
 (defn map-partitions
@@ -124,6 +129,9 @@
 (defn lreduce [rdd f]
   (.reduce rdd (F2. f)))
 
+
+;;for each go to each partition, and works in multithreaded way
+;;so can lose sort order if used for printing
 (defn void-map [rdd f]
   (.foreach rdd (VF. f)))
 
@@ -144,27 +152,28 @@
 
 ;;-----------------------rdd-to-pairrdd----------------------------------
 
-;;map-to-pair if rdd is not already in tuple2
-(defn pair-rdd [rdd-tuple2-pairs]
+(defn pair-rdd-from-pair [rdd-tuple2-pairs]
+  "used to create a JavaPairRDD from an RDD that contains Tuple2 members"
   (JavaPairRDD/fromJavaRDD rdd-tuple2-pairs))
 
-;;this is what i use to return vector from clojure function and auto become tutple2 for rdd-pair
-(defn map-to-pair
-  [f rdd]
-  (.mapToPair rdd (Pair. f)))
-
-(defn map-vec-to-pair
+(defn pair-rdd
   "rdd with vecs of size 2, to rdd-pair"
   [rdd]
   (.mapToPair rdd (Pair. identity)))
+
+(defn map-to-pair
+  "f should return a collection, the first two members become the pair(scala.Tuple2),
+   for example return a vector"
+  [f rdd]
+  (.mapToPair rdd (Pair. f)))
 
 ;;map_ to (Tuple. a1 a2)  dont produce a JavaPairRDD (rdd with tutples produce)so i have to use mapToPair for it
 (defn lmap-to-pair [rdd f]
   (.mapToPair rdd (Pair. f)))
 
-;;special case of map-to-pair where i keep the value as it is, and i only apply the f to the value to get the key,
-;;from not-pair RDD i get paired each per is ([(f value), value] ...) tuples
 (defn map-to-pair-key [f rdd]
+  "restricted case of map-to-pair, where i want to keep the value as it is, and i want to apply f to value to get the key
+   returns pairRDD with tuple2=[f-return-value value]"
   (.keyBy rdd (F1. f)))
 
 
@@ -219,7 +228,7 @@
     (.countByKey pair-rdd)))
 
 (defn cogroup
-  "like group but does it in 'the union' of the rdfs"
+  "gorup by key, and combine the values of each in a collection"
   ([pair-rdd1 pair-rdd2] (.cogroup pair-rdd1 pair-rdd2))
   ([pair-rdd1 pair-rdd2 pair-rdd3] (.cogroup pair-rdd1 pair-rdd2 pair-rdd3)))
 
@@ -234,11 +243,11 @@
   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
     (.mapValues pair-rdd (F1. f))))
 
-(defn map-flat-values [f pair-rdd]
+(defn flatmap-values [f pair-rdd]
   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
     (.flatMapValues pair-rdd (FlatMap. f))))
 
-(defn lmap-flat-values
+(defn lflatmap-values
   "[k,v] => (k,f=[v1 v2 ...]) (flatmap)=> (k,v1) (k,v2) ..."
   [pair-rdd f]
   (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
@@ -280,24 +289,12 @@
    (let [pair-rdd (if (instance? org.apache.spark.api.java.JavaPairRDD pair-rdd) pair-rdd (JavaPairRDD/fromJavaRDD pair-rdd))]
      (.countByKeyApprox pair-rdd timeout confidence))))
 
-;;TODO add more types
-(defn join-rdd
-  ([rdd rdd-other] (.join rdd rdd-other))
-  ([rdd rdd-other npartitions] (.join rdd rdd-other npartitions)))
+;;pairRDD to RDD-------------------------------------------------------------------------------------
 
-(defn zip
-  "Zips this RDD with another one, returning key-value pairs with the first element in each RDD, second element in each RDD
-   they must have the same number of elements else error"
-  [rdd rdd-other]
-  (.zip rdd rdd-other))
+(defn rdd [pair-rdd]
+  (.toJavaRDD (.rdd pair-rdd)))
 
 ;;----------------------------------------------------------------------------------------------------
-
-(defn count [rdd]
-  (.count rdd))
-
-(defn distinct [rdd]
-  (.distinct rdd))
 
 (defn seq [rdd]
   (.collect rdd))
@@ -307,19 +304,19 @@
   [n rdd]
   (.take rdd n))
 
-(defn take-ordered
+(defn take-asc
   ([n rdd] (.takeOrdered rdd n))
   ([n comp rdd] (.takeOrdered rdd n comp)))
 
-(defn ltake-ordered
+(defn ltake-asc
   ([rdd n] (.takeOrdered rdd n))
   ([rdd n comp] (.takeOrdered rdd n comp)))
 
-(defn top
+(defn take-dsc
   ([n rdd] (.top rdd n))
   ([n comp rdd] (.top rdd n comp)))
 
-(defn ltop
+(defn ltake-dsc
   ([rdd n] (.top rdd n))
   ([rdd n comp] (.top rdd n comp)))
 
@@ -352,7 +349,8 @@
 (defn collect-pairs [rdd]
   (mapv #(v %) (.collect rdd)))
 
-(defn j-rdd [df]
+(defn df->rdd [df]
+  "Uses the .rdd method of the dataframe, and then .toJavaRDD method of rdd"
   (-> df .rdd .toJavaRDD))
 
 ;;---------------------------------------------------dsl---------------------------------------
@@ -366,8 +364,6 @@
     sort squery-spark.rdds.rdd/sort
     keys squery-spark.rdds.rdd/keys
     vals squery-spark.rdds.rdd/vals
-    count squery-spark.rdds.rdd/count
-    distinct squery-spark.rdds.rdd/distinct
     seq squery-spark.rdds.rdd/seq
     take squery-spark.rdds.rdd/take
     frequencies squery-spark.rdds.rdd/frequencies
@@ -387,8 +383,8 @@
     p1 squery-spark.rdds.rdd/p1
     lmap squery-spark.rdds.rdd/lmap
     lfilter squery-spark.rdds.rdd/lfilter
-    map-flat squery-spark.rdds.rdd/map-flat
-    lmap-flat squery-spark.rdds.rdd/lmap-flat
+    flatmap squery-spark.rdds.rdd/flatmap
+    lflatmap squery-spark.rdds.rdd/lflatmap
     reduce-tree squery-spark.rdds.rdd/reduce-tree
     lreduce squery-spark.rdds.rdd/lreduce
     void-map squery-spark.rdds.rdd/void-map
@@ -409,22 +405,23 @@
     cogroup squery-spark.rdds.rdd/cogroup
     map-values squery-spark.rdds.rdd/map-values
     lmap-values squery-spark.rdds.rdd/lmap-values
-    map-flat-values squery-spark.rdds.rdd/map-flat-values
-    lmap-flat-values squery-spark.rdds.rdd/lmap-flat-values
+    flatmap-values squery-spark.rdds.rdd/flatmap-values
+    lflatmap-values squery-spark.rdds.rdd/lflatmap-values
     sample-by-key squery-spark.rdds.rdd/sample-by-key
     sample-by-key-exact squery-spark.rdds.rdd/sample-by-key-exact
     pair-rdd squery-spark.rdds.rdd/pair-rdd
     count-by-key-approx squery-spark.rdds.rdd/count-by-key-approx
-    join-rdd squery-spark.rdds.rdd/join-rdd
-    zip squery-spark.rdds.rdd/zip
-    take-ordered squery-spark.rdds.rdd/take-ordered
-    ltake-ordered squery-spark.rdds.rdd/ltake-ordered
-    top squery-spark.rdds.rdd/top
-    ltop squery-spark.rdds.rdd/ltop
+    ;join-rdd squery-spark.rdds.rdd/join-rdd
+    ;zip squery-spark.rdds.rdd/zip
+    rdd squery-spark.rdds.rdd/rdd
+    take-asc squery-spark.rdds.rdd/take-asc
+    ltake-asc squery-spark.rdds.rdd/ltake-asc
+    take-dsc squery-spark.rdds.rdd/take-dsc
+    ltake-dsc squery-spark.rdds.rdd/ltake-dsc
     print-pairs squery-spark.rdds.rdd/print-pairs
     collect squery-spark.rdds.rdd/collect
     collect-pairs squery-spark.rdds.rdd/collect-pairs
-    j-rdd squery-spark.rdds.rdd/j-rdd
+    df->rdd squery-spark.rdds.rdd/df->rdd
     lookup squery-spark.rdds.rdd/lookup
     ])
 
@@ -438,9 +435,6 @@
     sort clojure.core/sort
     keys clojure.core/keys
     vals clojure.core/vals
-    get clojure.core/get
-    count clojure.core/count
-    distinct clojure.core/distinct
     seq clojure.core/seq
     take clojure.core/take
     frequencies clojure.core/frequencies

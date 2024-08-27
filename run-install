@@ -1,0 +1,5 @@
+lein clean
+java -jar dsl-use-remove-0.1.0-SNAPSHOT-standalone.jar true
+lein install
+java -jar dsl-use-remove-0.1.0-SNAPSHOT-standalone.jar false
+

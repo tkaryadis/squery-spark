@@ -1,9 +1,12 @@
 (defproject org.squery/squery-spark "0.1.0-SNAPSHOT"
   :description "Clojure library for apache spark."
   :url "https://github.com/tkaryadis/squery-spark"
-  :license {:name "Eclipse Public License"
+  :license {:name "Eclipse Public License" 
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.10.0"]
+  :dependencies [                                           ;[org.clojure/clojure "1.12.0-rc1"]
+
+                 [org.clojure/clojure "1.12.0-beta2"]
+
                  ;[com.wjoel/clj-bean "0.2.1"]
 
                  [org.apache.spark/spark-core_2.12 "3.3.0"]
@@ -20,7 +23,7 @@
 
                  ;;query mongo with squery for mongo
                  [org.squery/squery-mongo-core "0.2.0-SNAPSHOT"]
-                 [org.squery/squery-mongo-j "0.2.0-SNAPSHOT"]
+                 [org.squery/squery-mongoj "0.2.0-SNAPSHOT"]
 
                  [io.github.erp12/fijit "1.0.8"]
                  [org.flatland/ordered "1.5.9"]
@@ -28,16 +31,14 @@
 
 
                  ]
-  ;;aot, main,gen-class, delete target, and run with leinengen (sources that use udf+rdd)
+  ;;aot, main,gen-class, delete target, and run with leinengen (sources that use udf+rdds)
   :aot [
-        ;;squery-spark.data-algorithms-book.ch1
-        ;squery-spark.data-algorithms-book.ch2
-        squery-spark.data-algorithms-book.ch3-ch4
-        ;squery-spark.sql-cookbook-book.ch7
-        ;squery-spark.udaf_test
-        ;squery-spark.spark-definitive-book.ch13
-        ;squery-spark.spark-definitive-book.ch12
-        ;squery-spark.udf-test
+        ;squery-spark.rdds.e01create-and-various
+        ;squery-spark.rdds.e04pairrdd
+        ;squery-spark.rdds.e02map-filter-take
+        ;squery-spark.sources-sinks.files
+        ;squery-spark.rdds.e04pairrdd
+        squery-spark.rdds.e03groupreduce
         ]
 
   :repositories [["graph" {:url "https://repos.spark-packages.org" :checksum :ignore}]]
@@ -45,7 +46,7 @@
   :plugins [[lein-codox "0.10.7"]]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
-  :main squery-spark.data-algorithms-book.ch3-ch4
+  ;:main squery-spark.spark-definitive-book.ch12
   ;squery-spark.udaf_test
   ;squery-spark.spark-definitive-book.ch13
   ;squery-spark.udf-test

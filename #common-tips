@@ -1,0 +1,49 @@
+1)this doesnt work
+
+(q (as emp :e1)
+   (join (q (as emp :e2)
+            ((not= :e1.ename :e2.ename)
+             (>= :e2.hiredate :e1.hiredate))
+            (group {:next-hiredate (min :e2.hiredate)}))
+         (true? true))
+   show)
+   
+e1 is not visable in the nested q
+its not like mongodb i cant see the e1, solution to this is do the join with e1,e2 in the creteria ONLY
+and after the join is done to d the subquery
+
+2)sort is allowed in array but not on Map types
+
+(group :e1.ename :e1.hiredate {:next-hiredate (min [:e2.hiredate :e2.ename])})
+
+BUT ARRAY REQUIRES SAME TYPES SO PROBLEM
+
+3)conj-each accumulator, doesnt collect nulls 
+
+
+4)(q (as emp :e1)
+   [{:clerks (if- (= :job "CLERK") :ename nil)}]
+   {:rn (wfield (row-number) (wsort :clerks!))}
+   
+  e1.rn doesnt exists, its added later
+  
+5)window field + row number
+
+  row_number and then group
+  or rn+group are useful alot
+  
+  to make groups that didnt exist before
+  
+6)if i want to group and avoid to collect on array (maybe data too many)
+  i can group by more fields to make each raw unique (i can add row number also)
+  
+  
+7)if i want to put 2 tables one next to another with join
+  i make them to be same row-count, i use row-number
+  and i join based on row-number,
+  because row-number cant be always the same number, i do  fullouter join 
+ 
+  
+  
+
+

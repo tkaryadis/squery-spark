@@ -9,7 +9,7 @@
             [clojure.string :as s]
             [clojure.core :as c]
 
-            ;;only for development, autocomplete of IDE, not needed
+    ;;only for development, autocomplete of IDE, not needed
             [squery-spark.rdds.rdd :refer :all])
   (:refer-clojure)
   (:import (org.apache.spark.sql Dataset RelationalGroupedDataset Column Row)
@@ -34,18 +34,18 @@
 ;;   (all those dsl enviroments are few assignements with zero cost in perfomance)
 
 ;;spark.range(500).rdd
-(r-> spark (.range 500) j-rdd print)
+(r-> spark (.range 500) df->rdd print)
 
 ;;spark.range(10).toDF().rdd.map(rowObject => rowObject.getLong(0))
 
 ;;lmap is the map with the rdd on the left as first arguments
-(r-> spark (.range 10) todf j-rdd (lmap (fn [row] (.getLong row 0))) print)
+(r-> spark (.range 10) todf df->rdd (lmap (fn [row] (.getLong row 0))) print)
 
 ;;TODO simpler way? cant find toDF for java
 ;;spark.range(10).rdd.toDF()
 (-> spark
     (.range 10)
-    j-rdd
+    df->rdd
     (lmap (fn [n] (row n)))
     (rdd->df spark [[:id :long]])
     show)
@@ -94,7 +94,7 @@
 
 ;;cfn is used, to hide the r enviroment
 ;;r,cfn makes sense when alot of code, but cfn can be avoided by seperating the clojure code out of r enviroment
-(r (pprint (take 5 (map-flat (cfn [word] (seq word)) words))))
+(r (pprint (take 5 (flatmap (cfn [word] (seq word)) words))))
 
 ;words.sortBy(word => word.length() * -1).take(2)
 
@@ -122,7 +122,7 @@
 
 ;;words.count()
 
-(prn (r/count words))
+(prn (.count words))
 
 ;val confidence = 0.95
 ;val timeoutMilliseconds = 400
@@ -138,7 +138,7 @@
 
 ;words.first()
 
-(prn (r/first words))
+(prn (.first words))
 
 
 ;;spark.sparkContext.parallelize(1 to 20).max()
@@ -153,11 +153,11 @@
 
 ;words.takeOrdered(5)
 
-(pprint (r/take-ordered 5 words))
+(pprint (take-asc 5 words))
 
 ;words.top(5)
 
-(pprint (r/top 5 words))
+(pprint (take-dsc 5 words))
 
 ;;TODO there are some more
 
